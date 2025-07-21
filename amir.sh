@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version 1.5.0 | Telegram: @Academi_vpn | Admin: @MahdiAGM0
+# Version 1.4.2 | Telegram: @Academi_vpn | Admin: @MahdiAGM0
 
 # Colors
 green="\e[1;32m"
@@ -22,7 +22,7 @@ type_text() {
     echo
 }
 
-# Random colored title
+# Title
 show_title() {
     colors=("\e[1;31m" "\e[1;32m" "\e[1;34m" "\e[1;35m" "\e[1;36m")
     rand_color=${colors[$RANDOM % ${#colors[@]}]}
@@ -31,23 +31,30 @@ show_title() {
     type_text "╔══════════════════════════════════════╗" 0.0004
     type_text "║         DNS MANAGEMENT TOOL         ║" 0.0004
     type_text "╠══════════════════════════════════════╣" 0.0004
-    type_text "║  Version: 1.5.0                      ║" 0.0004
+    type_text "║  Version: 1.4.2                      ║" 0.0004
     type_text "║  Telegram: @Academi_vpn             ║" 0.0004
     type_text "║  Admin: @MahdiAGM0                  ║" 0.0004
     type_text "╚══════════════════════════════════════╝" 0.0004
     echo -e "${reset}"
 }
 
-# Game Lists
-pc_games=("Call of Duty" "PUBG" "Fortnite" "Valorant" "League of Legends" "Dota 2" "CS:GO" "Overwatch" "Rainbow Six Siege" "Apex Legends" "Rocket League" "Minecraft" "Genshin Impact" "Battlefield V" "Roblox" "FIFA 24" "Warzone" "Escape from Tarkov" "War Thunder" "Destiny 2" "Smite" "Halo Infinite" "Fall Guys" "Paladins" "World of Warcraft" "Elden Ring" "Cyberpunk 2077" "ARK" "Sea of Thieves" "Diablo IV" "Arena Breakout (New)")
+# Sample Lists (To Be Extended Further)
+pc_games=("Fortnite" "Valorant" "League of Legends" "Dota 2" "CS:GO" "Overwatch" "Apex Legends" "PUBG" "Warzone" "Rust" "Battlefield 2042" "Minecraft" "Genshin Impact" "Destiny 2" "Smite" "Halo Infinite" "Fall Guys" "Paladins" "World of Warcraft" "Cyberpunk 2077" "ARK" "Sea of Thieves" "Diablo IV" "Escape from Tarkov" "FIFA 24" "Call of Duty MW3" "Roblox" "R6 Siege" "Elden Ring" "Starfield" "Lost Ark" "Path of Exile" "Hunt Showdown" "Team Fortress 2" "Final Fantasy XIV" "Guild Wars 2" "Rocket League" "New World" "Crossfire")
 
-console_games=("Call of Duty" "Fortnite" "FIFA 24" "Apex Legends" "NBA 2K24" "Rocket League" "Madden NFL" "Gran Turismo 7" "Destiny 2" "GTA V" "Battlefield V" "Warzone" "Minecraft" "PUBG" "Overwatch" "Valorant" "Halo Infinite" "Cyberpunk 2077" "The Last of Us" "Spider-Man 2" "Hogwarts Legacy" "God of War Ragnarok" "Ghost of Tsushima" "Elden Ring" "Red Dead Redemption 2" "Street Fighter 6" "Palworld" "Diablo IV" "ARK" "Star Wars Jedi Survivor" "Final Fantasy XVI" "Assassin's Creed Mirage" "Arena Breakout (New)")
+console_games=("Fortnite" "FIFA 24" "Call of Duty" "Apex Legends" "Warzone" "Valorant" "Minecraft" "Rocket League" "Roblox" "Battlefield V" "Overwatch 2" "R6 Siege" "Destiny 2" "Diablo IV" "PUBG" "Smite" "Fall Guys" "Halo Infinite" "Street Fighter 6" "Gran Turismo 7" "NBA 2K24" "MLB The Show 24" "Madden NFL 24" "Tekken 8" "GTA Online" "Cyberpunk 2077" "Elden Ring" "ARK" "ESO" "Sea of Thieves" "Paladins" "Dota 2" "League of Legends" "Splatoon 3" "Monster Hunter" "Warframe" "Borderlands 3" "Naraka Bladepoint" "NFS Heat")
 
 countries=("Iran" "Iraq" "UAE" "Turkey" "Qatar" "Saudi Arabia" "Jordan")
 
-dns_pool_game=("8.8.8.8 8.8.4.4" "1.1.1.1 1.0.0.1" "9.9.9.9 149.112.112.112" "185.51.200.2 185.51.200.3" "10.202.10.10 10.202.10.202")
-dns_pool_download=("178.22.122.100 185.51.200.2" "185.51.200.4 178.22.122.100")
-dns_pool_region_IR=("185.51.200.2 185.51.200.3" "178.22.122.100 185.51.200.2" "10.202.10.10 10.202.10.202")
+# Sample DNS Pools (Use real-world pools as needed)
+dns_pool_game=(
+  "1.1.1.1 1.0.0.1" "8.8.8.8 8.8.4.4" "9.9.9.9 149.112.112.112"
+)
+dns_pool_download=(
+  "208.67.222.222 208.67.220.220" "91.239.100.100 89.233.43.71" "185.51.200.2 178.22.122.100"
+)
+dns_pool_region_IR=(
+  "10.202.10.10 10.202.10.11" "185.55.225.25 185.55.226.26" "78.157.42.101 78.157.42.100"
+)
 
 check_ping() {
   ip="$1"
@@ -55,9 +62,27 @@ check_ping() {
   [[ -z "$result" ]] && echo "Timeout" || echo "${result} ms"
 }
 
+print_dns_format() {
+  game="$1"
+  country="$2"
+  dns1="$3"
+  dns2="$4"
+  ping1=$(check_ping $dns1)
+  ping2=$(check_ping $dns2)
+
+  echo -e "\n${green}Game:${reset} $game"
+  echo -e "${green}Country:${reset} $country"
+  echo -e "\n${cyan}DNS Set 1:${reset}"
+  echo -e "  Primary: $dns1"
+  echo -e "  Secondary: $dns2"
+  echo -e "${blue}Ping DNS:${reset}"
+  echo -e "  Primary: $ping1"
+  echo -e "  Secondary: $ping2"
+}
+
 auto_mode_console() {
   clear
-  echo -ne "${cyan}Enter your console and game (e.g., PS4 Fortnite): ${reset}"; read input
+  echo -ne "${cyan}Enter your console and game (e.g., PS5 Fortnite): ${reset}"; read input
   best_dns=""
   best_ping=9999
   for dns_pair in "${dns_pool_region_IR[@]}"; do
@@ -71,76 +96,75 @@ auto_mode_console() {
   done
   dns1=$(echo "$best_dns" | awk '{print $1}')
   dns2=$(echo "$best_dns" | awk '{print $2}')
-  echo -e "\n${green}Best DNS for $input:${reset}"
-  echo -e "Primary DNS: $dns1 (Ping: $(check_ping $dns1))"
-  echo -e "Secondary DNS: $dns2 (Ping: $(check_ping $dns2))"
+  print_dns_format "$input" "Unknown" "$dns1" "$dns2"
   read -p "Press Enter to return..."
 }
 
 search_game_mobile() {
   clear
   echo -ne "${cyan}Enter mobile game name: ${reset}"; read gname
+  [[ "$gname" == "" ]] && gname="Arena Breakout"
   echo -e "\n${green}Select your country:${reset}"
   for i in "${!countries[@]}"; do
     printf "${blue}[%2d]${reset} %s\n" $((i+1)) "${countries[$i]}"
   done
   echo -ne "\n${green}Choose country: ${reset}"; read copt
   [[ "$copt" == "0" ]] && return
+  country="${countries[$((copt-1))]}"
   pick=${dns_pool_game[$RANDOM % ${#dns_pool_game[@]}]}
   dns1=$(echo "$pick" | awk '{print $1}')
   dns2=$(echo "$pick" | awk '{print $2}')
-  echo -e "\n${cyan}Primary DNS:${reset} $dns1 (Ping: $(check_ping $dns1))"
-  echo -e "${cyan}Secondary DNS:${reset} $dns2 (Ping: $(check_ping $dns2))"
+  print_dns_format "$gname" "$country" "$dns1" "$dns2"
   read -p "Press Enter to return..."
-}
-
-benchmark_dns() {
-  clear
-  printf "${bold}%-25s %-10s\n${reset}" "DNS Address" "Ping"
-  echo "----------------------------------------"
-  for pair in "${dns_pool_game[@]}"; do
-    ip1=$(echo $pair | awk '{print $1}')
-    ping1=$(check_ping $ip1)
-    printf "%-25s %-10s\n" "$ip1" "$ping1"
-  done
-  read -p "\nPress Enter to return..."
 }
 
 gaming_dns_menu() {
   clear
-  echo -e "${green}Gaming DNS List with Ping:${reset}"
+  echo -e "${green}Gaming DNS List:${reset}"
   for pair in "${dns_pool_game[@]}"; do
-    dns1=$(echo "$pair" | awk '{print $1}')
-    dns2=$(echo "$pair" | awk '{print $2}')
-    echo -e "- Primary: $dns1 (Ping: $(check_ping $dns1))"
-    echo -e "  Secondary: $dns2 (Ping: $(check_ping $dns2))"
+    dns1=$(echo $pair | awk '{print $1}')
+    dns2=$(echo $pair | awk '{print $2}')
+    print_dns_format "PC/Mobile Game" "Unknown" "$dns1" "$dns2"
+    echo
   done
-  read -p "\nPress Enter to return..."
+  read -p "Press Enter to return..."
 }
 
 console_dns_menu() {
   clear
-  echo -e "${green}Console Game List:${reset}"
+  echo -e "${green}Console Game DNS:${reset}"
   for game in "${console_games[@]}"; do
-    if [[ "$game" == *"(New)"* ]]; then
-      echo -e "${orange}- $game${reset}"
-    else
-      echo "- $game"
-    fi
+    pick=${dns_pool_region_IR[$RANDOM % ${#dns_pool_region_IR[@]}]}
+    dns1=$(echo "$pick" | awk '{print $1}')
+    dns2=$(echo "$pick" | awk '{print $2}')
+    print_dns_format "$game" "Unknown" "$dns1" "$dns2"
+    echo
   done
-  read -p "\nPress Enter to return..."
+  read -p "Press Enter to return..."
 }
 
 bypass_dns_menu() {
   clear
   echo -e "${green}Download / Anti-Censorship DNS:${reset}"
   for pair in "${dns_pool_download[@]}"; do
-    dns1=$(echo "$pair" | awk '{print $1}')
-    dns2=$(echo "$pair" | awk '{print $2}')
-    echo -e "- Primary: $dns1 (Ping: $(check_ping $dns1))"
-    echo -e "  Secondary: $dns2 (Ping: $(check_ping $dns2))"
+    dns1=$(echo $pair | awk '{print $1}')
+    dns2=$(echo $pair | awk '{print $2}')
+    print_dns_format "Downloader" "Iran" "$dns1" "$dns2"
+    echo
   done
-  read -p "\nPress Enter to return..."
+  read -p "Press Enter to return..."
+}
+
+benchmark_dns() {
+  clear
+  echo -e "${green}DNS Benchmarking:${reset}"
+  for pair in "${dns_pool_game[@]}"; do
+    dns1=$(echo $pair | awk '{print $1}')
+    dns2=$(echo $pair | awk '{print $2}')
+    print_dns_format "Benchmark" "Unknown" "$dns1" "$dns2"
+    echo
+  done
+  read -p "Press Enter to return..."
 }
 
 main_menu() {
