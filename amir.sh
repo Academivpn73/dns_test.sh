@@ -19,35 +19,37 @@ print_animated_lines() {
   done
 }
 
-# نمایش عنوان با انیمیشن
+# نمایش عنوان با انیمیشن بالا به پایین
 show_title() {
   lines=(
-    "${cyan}╔══════════════════════════════════════════╗"
-    "║           Gaming DNS Management Tool     ║"
-    "║           Version 3.0 | @Academi_vpn      ║"
-    "╚══════════════════════════════════════════╝${reset}"
+    "${cyan}╔════════════════════════════════════════════════════╗",
+    "║        Gaming DNS Management Tool                ║",
+    "║        Version 2.1 | @Academi_vpn                ║",
+    "╚════════════════════════════════════════════════════╝${reset}"
   )
   print_animated_lines "${lines[@]}"
 }
 
 # لیست کشورها
-countries=("Iran" "Iraq" "UAE" "Turkey" "Qatar" "Saudi Arabia" "Jordan" "Oman" "Bahrain" "Kuwait" "Lebanon" "Syria" "Palestine" "Yemen")
+countries=("Iran" "Iraq" "UAE" "Turkey" "Qatar" "Saudi Arabia" "Jordan" "Oman" "Kuwait" "Bahrain")
 
-# لیست بازی‌ها (40 عدد برای هر پلتفرم)
-pc_games=("Valorant" "Fortnite" "CS:GO" "Dota 2" "League of Legends" "Overwatch 2" "Apex Legends" "Battlefield 2042" "Escape from Tarkov" "Minecraft" "Roblox" "Rust" "Team Fortress 2" "Diablo IV" "Starfield" "Cyberpunk 2077" "World of Warcraft" "Black Desert" "Elder Scrolls Online" "Guild Wars 2" "DayZ" "ARK" "Halo Infinite" "Lost Ark" "PUBG PC" "Paladins" "Smite" "Destiny 2" "Warframe" "R6 Siege" "Crossfire" "Dead by Daylight" "World War 3" "Genshin Impact" "Sons of the Forest" "Farming Simulator" "Fall Guys" "Tarkov Arena" "SCUM")
+# لیست کامل 40 بازی برای هر پلتفرم
+pc_games=("Valorant" "Fortnite" "CS:GO" "Dota 2" "League of Legends" "Overwatch 2" "Apex Legends" "Minecraft" "Rust" "Escape from Tarkov" "Rainbow Six Siege" "Warframe" "Battlefield V" "Cyberpunk 2077" "Genshin Impact" "ARK" "Fall Guys" "Roblox" "Lost Ark" "Elder Scrolls Online" "World of Warcraft" "Diablo IV" "Paladins" "Smite" "Team Fortress 2" "Halo Infinite" "War Thunder" "PUBG PC" "The Finals" "Sea of Thieves" "Dead by Daylight" "Hunt Showdown" "DayZ" "GTA V" "Destiny 2" "Final Fantasy XIV" "Star Citizen" "New World" "Path of Exile")
 
-console_games=("FIFA 24" "Call of Duty" "Rocket League" "GTA Online" "Elden Ring" "NBA 2K24" "Gran Turismo 7" "Red Dead Online" "The Crew 2" "Forza Horizon 5" "Battlefield V" "Destiny 2" "Fall Guys" "Diablo IV" "Minecraft" "Dead by Daylight" "Brawlhalla" "World of Tanks" "The Division 2" "Halo Infinite" "Apex Legends" "R6 Siege" "Fortnite" "Cyberpunk 2077" "PUBG Console" "Warframe" "Smite" "WWE 2K24" "ARK" "Rust Console" "Path of Exile" "Overwatch 2" "Callisto Protocol" "Sea of Thieves" "Monster Hunter" "Guilty Gear" "Mortal Kombat 1" "Street Fighter 6" "Riders Republic")
+console_games=("FIFA 24" "Call of Duty" "Rocket League" "GTA Online" "Elden Ring" "Red Dead Redemption 2" "Destiny 2" "Overwatch 2" "NBA 2K24" "Apex Legends" "Fortnite" "The Division 2" "Ghost Recon" "Gran Turismo" "Battlefield 2042" "Cyberpunk 2077" "Minecraft" "The Last of Us" "Uncharted" "God of War" "Spiderman" "Assassin's Creed" "Rainbow Six Siege" "Halo" "Forza Horizon" "Madden NFL" "F1 2024" "Diablo IV" "ARK" "Rust" "Paladins" "Smite" "ESO" "Warframe" "Tekken 8" "Street Fighter 6" "Mortal Kombat" "Gears of War" "PUBG Console")
 
-mobile_games=("PUBG Mobile" "Call of Duty Mobile" "Arena Breakout" "Free Fire" "Wild Rift" "Clash Royale" "Clash of Clans" "Brawl Stars" "Mobile Legends" "Arena of Valor" "New State Mobile" "Genshin Impact" "Fortnite Mobile" "Farlight 84" "Sky Children" "LifeAfter" "Cyber Hunter" "Bullet Echo" "Hyper Front" "Standoff 2" "Modern Combat 5" "Warface GO" "Pixel Gun 3D" "Zooba" "State of Survival" "Among Us" "Lords Mobile" "Boom Beach" "Mech Arena" "Marvel Super War" "Pokemon Unite" "Honkai Impact" "AFK Arena" "Summoners War" "Magic Rush" "Tacticool" "Shadowgun Legends" "Dead Trigger 2" "Into the Dead 2")
+mobile_games=("PUBG Mobile" "Call of Duty Mobile" "Arena Breakout" "Free Fire" "Wild Rift" "Mobile Legends" "Clash Royale" "Clash of Clans" "Brawl Stars" "Among Us" "Roblox Mobile" "Apex Mobile" "Genshin Impact" "FIFA Mobile" "Diablo Immortal" "League of Legends Mobile" "New State Mobile" "Honor of Kings" "Warzone Mobile" "Subway Surfers" "8 Ball Pool" "Asphalt 9" "Shadow Fight 4" "Dragon Ball Legends" "Fortnite Mobile" "TFT Mobile" "Critical Ops" "Modern Combat" "Bullet Echo" "Zula Mobile" "NBA Live Mobile" "eFootball 2024" "World War Heroes" "World of Tanks Blitz" "Naruto Slugfest" "Summoners War" "Clash Mini" "Honkai Impact" "CrossFire Mobile")
 
-# ساخت DNSهای ساختگی (برای مثال، بیش از 100 DNS به صورت تکراری و نمونه‌ای ساخته می‌شوند)
+# تولید لیست DNS ساختگی 100تایی برای هر بخش
 dns_pool_game=()
 dns_pool_console=()
 dns_pool_download=()
 for i in {1..100}; do
-  dns_pool_game+=("1.1.$i.$((i+1)) 1.0.$i.$((i+2))")
-  dns_pool_console+=("10.0.$i.$((i+1)) 10.0.$((i+1)).$((i+2))")
-  dns_pool_download+=("185.51.${i}.1 178.22.${i}.2")
+  a=$((RANDOM%255))
+  b=$((RANDOM%255))
+  dns_pool_game+=("1.${a}.${b}.1 1.${a}.${b}.2")
+  dns_pool_console+=("2.${a}.${b}.1 2.${a}.${b}.2")
+  dns_pool_download+=("3.${a}.${b}.1 3.${a}.${b}.2")
 done
 
 check_ping() {
@@ -70,7 +72,7 @@ print_dns_format() {
 
   echo -e "\n${green}Game:${reset} $game"
   echo -e "${green}Country:${reset} $country"
-  echo -e "\n${cyan}DNS Set 1:${reset}"
+  echo -e "\n${cyan}DNS Set:${reset}"
   echo -e "  Primary: $dns1"
   echo -e "  Secondary: $dns2"
   echo -e "${blue}Ping DNS:${reset}"
