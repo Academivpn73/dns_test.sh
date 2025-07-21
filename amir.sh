@@ -5,6 +5,11 @@ green="\e[1;32m"
 blue="\e[1;34m"
 cyan="\e[1;36m"
 red="\e[1;31m"
+yellow="\e[1;33m"
+purple="\e[1;35m"
+
+# رنگ‌های مختلف برای عنوان
+colors=("$cyan" "$green" "$blue" "$purple" "$yellow")
 
 # انیمیشن تایپ خط به خط
 print_animated_lines() {
@@ -13,44 +18,51 @@ print_animated_lines() {
   for line in "${lines[@]}"; do
     for ((i=0; i<${#line}; i++)); do
       echo -ne "${line:$i:1}"
-      sleep 0.005
+      sleep 0.002
     done
     echo
   done
 }
 
-# نمایش عنوان با انیمیشن بالا به پایین
+# نمایش عنوان با انیمیشن و تغییر رنگ تصادفی
 show_title() {
+  rand=$((RANDOM % ${#colors[@]}))
+  color=${colors[$rand]}
   lines=(
-    "${cyan}╔════════════════════════════════════════════════════╗",
-    "║        Gaming DNS Management Tool                ║",
-    "║        Version 2.1 | @Academi_vpn                ║",
+    "${color}╔════════════════════════════════════════════════════╗"
+    "║        Gaming DNS Management Tool                ║"
+    "║        Version 2.1 | @Academi_vpn                ║"
     "╚════════════════════════════════════════════════════╝${reset}"
   )
   print_animated_lines "${lines[@]}"
 }
 
 # لیست کشورها
-countries=("Iran" "Iraq" "UAE" "Turkey" "Qatar" "Saudi Arabia" "Jordan" "Oman" "Kuwait" "Bahrain")
+countries=("Iran" "Iraq" "UAE" "Turkey" "Qatar" "Saudi Arabia" "Jordan" "Kuwait" "Oman" "Bahrain")
 
-# لیست کامل 40 بازی برای هر پلتفرم
-pc_games=("Valorant" "Fortnite" "CS:GO" "Dota 2" "League of Legends" "Overwatch 2" "Apex Legends" "Minecraft" "Rust" "Escape from Tarkov" "Rainbow Six Siege" "Warframe" "Battlefield V" "Cyberpunk 2077" "Genshin Impact" "ARK" "Fall Guys" "Roblox" "Lost Ark" "Elder Scrolls Online" "World of Warcraft" "Diablo IV" "Paladins" "Smite" "Team Fortress 2" "Halo Infinite" "War Thunder" "PUBG PC" "The Finals" "Sea of Thieves" "Dead by Daylight" "Hunt Showdown" "DayZ" "GTA V" "Destiny 2" "Final Fantasy XIV" "Star Citizen" "New World" "Path of Exile")
+# لیست کامل 40تایی بازی برای هر پلتفرم
+pc_games=("Valorant" "Fortnite" "CS:GO" "Dota 2" "League of Legends" "Overwatch 2" "Apex Legends" "Warframe" "Rust" "Team Fortress 2" "Minecraft" "War Thunder" "World of Tanks" "Lost Ark" "Genshin Impact" "Path of Exile" "PUBG PC" "Battlefield V" "ARMA 3" "DayZ" "Escape From Tarkov" "Destiny 2" "Halo Infinite" "Rainbow Six Siege" "Call of Duty Warzone" "Fall Guys" "Sea of Thieves" "Left 4 Dead 2" "Dead by Daylight" "Elden Ring" "Cyberpunk 2077" "Paladins" "Smite" "Phasmophobia" "Rocket League" "Splitgate" "World War 3" "Tarkov Arena" "Stalker 2")
+console_games=("FIFA 24" "Call of Duty MW3" "Rocket League" "GTA Online" "Elden Ring" "Destiny 2" "Red Dead Redemption 2" "NBA 2K24" "Gran Turismo 7" "God of War Ragnarok" "Hogwarts Legacy" "Spider-Man 2" "The Last of Us" "Cyberpunk 2077" "Fallout 4" "Battlefield 2042" "Minecraft Console" "Halo Infinite" "Street Fighter 6" "Diablo IV" "Forza Horizon 5" "Apex Legends" "Overwatch 2" "PUBG Console" "ARK Survival" "Rainbow Six Siege" "Ghost of Tsushima" "Callisto Protocol" "Assassin's Creed Mirage" "Skull and Bones" "Resident Evil 4 Remake" "Death Stranding" "Watch Dogs Legion" "Days Gone" "Mortal Kombat 11" "NHL 24" "Granblue Fantasy" "Silent Hill 2 Remake" "Baldur's Gate 3")
+mobile_games=("PUBG Mobile" "Call of Duty Mobile" "Arena Breakout ${yellow}(جدید)${reset}" "Free Fire" "Wild Rift" "Mobile Legends" "Clash of Clans" "Clash Royale" "Brawl Stars" "League of Legends Mobile" "Genshin Impact" "Among Us" "Roblox" "8 Ball Pool" "Candy Crush Saga" "Subway Surfers" "Standoff 2" "Modern Combat 5" "Shadowgun Legends" "Farlight 84" "Sky Children of Light" "World War Heroes" "Sniper 3D" "Zooba" "Crossfire: Legends" "Zula Mobile" "MadOut2" "Battle Prime" "CarX Drift Racing 2" "Tacticool" "Bullet Echo" "Warface GO" "Dead Trigger 2" "Infinity Ops" "Cover Fire" "Arena of Valor" "Boom Beach" "Mobile Royale" "Top Eleven" "eFootball Mobile")
 
-console_games=("FIFA 24" "Call of Duty" "Rocket League" "GTA Online" "Elden Ring" "Red Dead Redemption 2" "Destiny 2" "Overwatch 2" "NBA 2K24" "Apex Legends" "Fortnite" "The Division 2" "Ghost Recon" "Gran Turismo" "Battlefield 2042" "Cyberpunk 2077" "Minecraft" "The Last of Us" "Uncharted" "God of War" "Spiderman" "Assassin's Creed" "Rainbow Six Siege" "Halo" "Forza Horizon" "Madden NFL" "F1 2024" "Diablo IV" "ARK" "Rust" "Paladins" "Smite" "ESO" "Warframe" "Tekken 8" "Street Fighter 6" "Mortal Kombat" "Gears of War" "PUBG Console")
+# تولید بیش از 100 DNS جعلی برای هر نوع
+make_fake_dns_list() {
+  list=()
+  for ((i=1; i<=120; i++)); do
+    a=$((RANDOM % 255))
+    b=$((RANDOM % 255))
+    c=$((RANDOM % 255))
+    d=$((RANDOM % 255))
+    e=$((RANDOM % 255))
+    f=$((RANDOM % 255))
+    list+=("$a.$b.$c.$d $e.$f.$b.$a")
+  done
+  echo "${list[@]}"
+}
 
-mobile_games=("PUBG Mobile" "Call of Duty Mobile" "Arena Breakout" "Free Fire" "Wild Rift" "Mobile Legends" "Clash Royale" "Clash of Clans" "Brawl Stars" "Among Us" "Roblox Mobile" "Apex Mobile" "Genshin Impact" "FIFA Mobile" "Diablo Immortal" "League of Legends Mobile" "New State Mobile" "Honor of Kings" "Warzone Mobile" "Subway Surfers" "8 Ball Pool" "Asphalt 9" "Shadow Fight 4" "Dragon Ball Legends" "Fortnite Mobile" "TFT Mobile" "Critical Ops" "Modern Combat" "Bullet Echo" "Zula Mobile" "NBA Live Mobile" "eFootball 2024" "World War Heroes" "World of Tanks Blitz" "Naruto Slugfest" "Summoners War" "Clash Mini" "Honkai Impact" "CrossFire Mobile")
-
-# تولید لیست DNS ساختگی 100تایی برای هر بخش
-dns_pool_game=()
-dns_pool_console=()
-dns_pool_download=()
-for i in {1..100}; do
-  a=$((RANDOM%255))
-  b=$((RANDOM%255))
-  dns_pool_game+=("1.${a}.${b}.1 1.${a}.${b}.2")
-  dns_pool_console+=("2.${a}.${b}.1 2.${a}.${b}.2")
-  dns_pool_download+=("3.${a}.${b}.1 3.${a}.${b}.2")
-done
+dns_pool_game=( $(make_fake_dns_list) )
+dns_pool_console=( $(make_fake_dns_list) )
+dns_pool_download=( $(make_fake_dns_list) )
 
 check_ping() {
   ip=$1
@@ -72,7 +84,7 @@ print_dns_format() {
 
   echo -e "\n${green}Game:${reset} $game"
   echo -e "${green}Country:${reset} $country"
-  echo -e "\n${cyan}DNS Set:${reset}"
+  echo -e "\n${cyan}DNS Set 1:${reset}"
   echo -e "  Primary: $dns1"
   echo -e "  Secondary: $dns2"
   echo -e "${blue}Ping DNS:${reset}"
@@ -135,6 +147,7 @@ main_menu() {
     echo -e "${blue}[2]${reset} Console Games DNS 🕹️"
     echo -e "${blue}[3]${reset} Mobile Games DNS 📱"
     echo -e "${blue}[4]${reset} Download DNS ⬇️"
+    echo -e "${blue}[5]${reset} Auto Mod 🛠️"
     echo -e "${blue}[0]${reset} Exit ❌"
     echo -ne "\n${green}Choose an option: ${reset}"
     read opt
@@ -151,6 +164,7 @@ main_menu() {
         done
         read -p "\nPress Enter to return..."
         ;;
+      5) echo "(Auto Mod functionality not implemented yet)"; read -p "Press Enter..." ;;
       0) echo -e "${green}Goodbye 🙏🏻${reset}"; exit ;;
       *) echo -e "${red}Invalid input!${reset}"; sleep 1 ;;
     esac
