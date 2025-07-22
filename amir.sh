@@ -1,19 +1,13 @@
 #!/bin/bash
 
-# Colors
 RESET="\e[0m"
-RED="\e[1;31m"
-GREEN="\e[1;32m"
-YELLOW="\e[1;33m"
-BLUE="\e[1;34m"
-CYAN="\e[1;36m"
-PURPLE="\e[1;35m"
 ORANGE="\e[38;5;208m"
+GREEN="\e[1;32m"
+CYAN="\e[1;36m"
+RED="\e[1;31m"
 
-# Color palette for title rotation
-TITLE_COLORS=("$CYAN" "$GREEN" "$BLUE" "$PURPLE" "$YELLOW" "$ORANGE")
-
-# Title content
+# Title with rotating colors
+TITLE_COLORS=("\e[1;36m" "\e[1;32m" "\e[1;33m" "\e[1;35m" "\e[1;34m")
 TITLE_LINES=(
 "╔════════════════════════════════════════════════════════════╗"
 "║            Gaming DNS Management Tool                      ║"
@@ -22,10 +16,9 @@ TITLE_LINES=(
 "╚════════════════════════════════════════════════════════════╝"
 )
 
-# Countries (Middle East + Iran)
 COUNTRIES=("Iran" "Iraq" "UAE" "Turkey" "Qatar" "Saudi Arabia" "Jordan" "Kuwait" "Oman" "Bahrain")
 
-# PC Games (50 real titles)
+# Games with (New) only once, no color code in the name itself, color applied when printing
 PC_GAMES=(
 "Valorant" "Fortnite" "CS:GO" "Dota 2" "League of Legends" "Overwatch 2" "Apex Legends" "Warframe" "Rust" "Team Fortress 2"
 "Minecraft" "War Thunder" "World of Tanks" "Lost Ark" "Genshin Impact" "Path of Exile" "PUBG PC" "Battlefield V" "ARMA 3" "DayZ"
@@ -34,7 +27,6 @@ PC_GAMES=(
 "Skyrim" "Fallout 76" "Among Us" "Hades" "Terraria" "Metro Exodus" "CyberConnect2" "Dark Souls 3" "The Witcher 3" "Control"
 )
 
-# Console Games (50 real titles)
 CONSOLE_GAMES=(
 "FIFA 24" "Call of Duty MW3" "Rocket League" "GTA Online" "Elden Ring" "Destiny 2" "Red Dead Redemption 2" "NBA 2K24" "Gran Turismo 7" "God of War Ragnarok"
 "Hogwarts Legacy" "Spider-Man 2" "The Last of Us" "Cyberpunk 2077" "Fallout 4" "Battlefield 2042" "Minecraft Console" "Halo Infinite" "Street Fighter 6" "Diablo IV"
@@ -43,74 +35,77 @@ CONSOLE_GAMES=(
 "Halo 3" "God of War 3" "Gears of War 5" "Mass Effect Legendary Edition" "Bayonetta 3" "Monster Hunter Rise" "Ratchet & Clank" "Doom Eternal" "Metal Gear Solid V" "Sea of Thieves"
 )
 
-# Mobile Games (50 real titles + Arena Breakout new)
 MOBILE_GAMES=(
-"PUBG Mobile" "Call of Duty Mobile" "${ORANGE}Arena Breakout (New)${RESET}" "Free Fire" "Wild Rift" "Mobile Legends" "Clash of Clans" "Clash Royale" "Brawl Stars" "League of Legends Mobile"
+"PUBG Mobile" "Call of Duty Mobile" "Arena Breakout" "Free Fire" "Wild Rift" "Mobile Legends" "Clash of Clans" "Clash Royale" "Brawl Stars" "League of Legends Mobile"
 "Genshin Impact" "Among Us" "Roblox" "8 Ball Pool" "Candy Crush Saga" "Subway Surfers" "Standoff 2" "Modern Combat 5" "Shadowgun Legends" "Farlight 84"
 "Sky Children of Light" "World War Heroes" "Sniper 3D" "Zooba" "Crossfire: Legends" "Zula Mobile" "MadOut2" "Battle Prime" "CarX Drift Racing 2" "Tacticool"
 "Bullet Echo" "Warface GO" "Dead Trigger 2" "Infinity Ops" "Cover Fire" "Arena of Valor" "Boom Beach" "Mobile Royale" "Top Eleven" "eFootball Mobile"
 "Pokemon Go" "Clash Quest" "Legends of Runeterra" "Brawlout" "MARVEL Future Fight" "Call of Dragons" "Dragon Raja" "Lineage 2: Revolution" "Black Desert Mobile" "Vainglory"
 )
 
-# DNS pools (realistic format, generated below)
-# For simplicity, using fixed list for each section with real-like IPs (dummy but plausible)
+# DNS pools: برای هر کشور یک مجموعه اولیه و ثانویه (خیلی بزرگ)
+declare -A DNS_POOL_PRIMARY
+declare -A DNS_POOL_SECONDARY
 
-declare -A DNS_POOLS
+# نمونه ساده: فقط 20 DNS برای هر کشور - برای واقعی بودن باید اضافه کنی
+DNS_POOL_PRIMARY["Iran"]="1.1.1.1 8.8.8.8 9.9.9.9 208.67.222.222 94.140.14.14"
+DNS_POOL_SECONDARY["Iran"]="1.0.0.1 8.8.4.4 149.112.112.112 208.67.220.220 94.140.15.15"
 
-# Fill with 120 DNS pairs for each section (Primary Secondary)
-fill_dns_pool() {
-  local pool_name="$1"
-  DNS_POOLS["$pool_name"]=""
-  for i in $(seq 1 120); do
-    p1=$(( (RANDOM%223)+1 )).$(( (RANDOM%255) )) . $(( (RANDOM%255) )) . $(( (RANDOM%255) ))
-    p1="${p1// /}"  # remove spaces
-    p2=$(( (RANDOM%223)+1 )).$(( (RANDOM%255) )) . $(( (RANDOM%255) )) . $(( (RANDOM%255) ))
-    p2="${p2// /}"
-    DNS_POOLS["$pool_name"]+=" $p1 $p2;"
-  done
-}
+DNS_POOL_PRIMARY["Iraq"]="77.88.8.8 185.228.168.168 80.80.80.80 84.200.69.80 1.1.1.1"
+DNS_POOL_SECONDARY["Iraq"]="77.88.8.1 185.228.169.9 80.80.81.81 84.200.70.40 1.0.0.1"
 
-# Instead of random which can be invalid, let's use curated sample DNS IPs per section
+DNS_POOL_PRIMARY["UAE"]="8.8.8.8 1.1.1.1 9.9.9.9 208.67.222.222 94.140.14.14"
+DNS_POOL_SECONDARY["UAE"]="8.8.4.4 1.0.0.1 149.112.112.112 208.67.220.220 94.140.15.15"
 
-# Realistic DNS examples for gaming (primary secondary)
-DNS_POOLS["pc"]="1.1.1.1 1.0.0.1;8.8.8.8 8.8.4.4;9.9.9.9 149.112.112.112;208.67.222.222 208.67.220.220;94.140.14.14 94.140.15.15;195.46.39.39 195.46.39.40;77.88.8.8 77.88.8.1;185.228.168.168 185.228.169.9;84.200.69.80 84.200.70.40;80.80.80.80 80.80.81.81"
-# Add repeat to make over 100, replicating
-for i in {1..12}; do DNS_POOLS["pc"]+=" 1.1.1.1 1.0.0.1;" ; done
+DNS_POOL_PRIMARY["Turkey"]="9.9.9.9 1.1.1.1 8.8.8.8 208.67.222.222 77.88.8.8"
+DNS_POOL_SECONDARY["Turkey"]="149.112.112.112 1.0.0.1 8.8.4.4 208.67.220.220 77.88.8.1"
 
-DNS_POOLS["console"]="8.8.8.8 8.8.4.4;208.67.222.222 208.67.220.220;94.140.14.14 94.140.15.15;9.9.9.9 149.112.112.112;77.88.8.8 77.88.8.1;185.228.168.168 185.228.169.9;80.80.80.80 80.80.81.81;84.200.69.80 84.200.70.40"
-for i in {1..15}; do DNS_POOLS["console"]+=" 8.8.8.8 8.8.4.4;" ; done
+DNS_POOL_PRIMARY["Qatar"]="208.67.222.222 9.9.9.9 1.1.1.1 8.8.8.8 77.88.8.8"
+DNS_POOL_SECONDARY["Qatar"]="208.67.220.220 149.112.112.112 1.0.0.1 8.8.4.4 77.88.8.1"
 
-DNS_POOLS["mobile"]="1.1.1.1 1.0.0.1;9.9.9.9 149.112.112.112;208.67.222.222 208.67.220.220;94.140.14.14 94.140.15.15;8.8.8.8 8.8.4.4;77.88.8.8 77.88.8.1;185.228.168.168 185.228.169.9"
-for i in {1..20}; do DNS_POOLS["mobile"]+=" 1.1.1.1 1.0.0.1;" ; done
+DNS_POOL_PRIMARY["Saudi Arabia"]="1.1.1.1 8.8.8.8 9.9.9.9 208.67.222.222 94.140.14.14"
+DNS_POOL_SECONDARY["Saudi Arabia"]="1.0.0.1 8.8.4.4 149.112.112.112 208.67.220.220 94.140.15.15"
 
-DNS_POOLS["download"]="8.8.8.8 8.8.4.4;1.1.1.1 1.0.0.1;9.9.9.9 149.112.112.112;208.67.222.222 208.67.220.220;94.140.14.14 94.140.15.15"
-for i in {1..25}; do DNS_POOLS["download"]+=" 8.8.8.8 8.8.4.4;" ; done
+DNS_POOL_PRIMARY["Jordan"]="8.8.8.8 1.1.1.1 77.88.8.8 208.67.222.222 9.9.9.9"
+DNS_POOL_SECONDARY["Jordan"]="8.8.4.4 1.0.0.1 77.88.8.1 208.67.220.220 149.112.112.112"
 
-DNS_POOLS["vpn"]="185.222.222.222 185.222.222.223; 45.82.81.5 45.82.81.6; 213.108.98.98 213.108.99.99; 91.108.56.0 91.108.56.1; 198.18.0.1 198.18.0.2"
-for i in {1..30}; do DNS_POOLS["vpn"]+=" 185.222.222.222 185.222.222.223;" ; done
+DNS_POOL_PRIMARY["Kuwait"]="1.1.1.1 9.9.9.9 208.67.222.222 8.8.8.8 77.88.8.8"
+DNS_POOL_SECONDARY["Kuwait"]="1.0.0.1 149.112.112.112 208.67.220.220 8.8.4.4 77.88.8.1"
 
-# Function to print title with color rotation
+DNS_POOL_PRIMARY["Oman"]="208.67.222.222 1.1.1.1 8.8.8.8 9.9.9.9 94.140.14.14"
+DNS_POOL_SECONDARY["Oman"]="208.67.220.220 1.0.0.1 8.8.4.4 149.112.112.112 94.140.15.15"
+
+DNS_POOL_PRIMARY["Bahrain"]="9.9.9.9 208.67.222.222 1.1.1.1 8.8.8.8 77.88.8.8"
+DNS_POOL_SECONDARY["Bahrain"]="149.112.112.112 208.67.220.220 1.0.0.1 8.8.4.4 77.88.8.1"
+
+# حافظه کوتاه مدت DNS های داده شده تا تکراری نده
+declare -A USED_DNS_PRIMARY
+declare -A USED_DNS_SECONDARY
+
+# متد چاپ عنوان با رنگ چرخشی
+title_color_index=0
 print_title() {
-  color=${TITLE_COLORS[$((RANDOM % ${#TITLE_COLORS[@]}))]}
   clear
+  local color=${TITLE_COLORS[$title_color_index]}
+  ((title_color_index=(title_color_index+1) % ${#TITLE_COLORS[@]}))
   for line in "${TITLE_LINES[@]}"; do
     echo -e "${color}${line}${RESET}"
   done
   echo
 }
 
-# Simple animation printing lines top to bottom
+# انیمیشن ساده چاپ خط به خط
 animate_print() {
   for line in "$@"; do
     echo -e "$line"
-    sleep 0.04
+    sleep 0.03
   done
 }
 
-# Show main menu
+# نمایش منوی اصلی
 show_main_menu() {
   print_title
-  menu=(
+  local menu=(
     "[1] PC Games"
     "[2] Console Games"
     "[3] Mobile Games"
@@ -134,20 +129,19 @@ show_main_menu() {
   esac
 }
 
-# Show list of games with DNS
+# انتخاب بازی
 show_game_list() {
-  section=$1
+  local section=$1
   print_title
   local games_var="${section^^}_GAMES[@]"
   local games_list=("${!games_var}")
-  echo -e "${YELLOW}Select a game to get DNS:${RESET}"
+  echo -e "${ORANGE}Select a game:${RESET}"
   local i=1
   for game in "${games_list[@]}"; do
-    # Highlight new games (if name has (New))
-    if [[ "$game" == *"(New)"* ]]; then
-      # Remove color codes if any
-      plain_game=$(echo -e "$game" | sed -r 's/\x1B\[[0-9;]*[JKmsu]//g')
-      echo -e "[$i] ${ORANGE}${plain_game} (New)${RESET}"
+    if [[ "$game" == *"New"* ]]; then
+      # حذف کلمه New در متن اصلی و اضافه کردن رنگ و (New) در نمایش
+      plain_game="${game//\(New\)/}"
+      echo -e "[$i] ${plain_game} ${GREEN}(New)${RESET}"
     else
       echo "[$i] $game"
     fi
@@ -163,78 +157,126 @@ show_game_list() {
     show_game_list "$section"
     return
   fi
-  # Show DNS for chosen game
-  show_dns_for_game "$section"
+
+  # انتخاب کشور بعد بازی
+  selected_game="${games_list[$game_opt-1]}"
+  select_country_and_show_dns "$section" "$selected_game"
 }
 
-# Show DNS (Primary & Secondary) with ping test
-show_dns_for_game() {
-  section=$1
-  # Pick random DNS from pool (primary & secondary)
-  IFS=';' read -ra dns_pairs <<< "${DNS_POOLS[$section]}"
-  pair_index=$(( RANDOM % ${#dns_pairs[@]} ))
-  dns_pair=${dns_pairs[$pair_index]}
-  # split primary and secondary
-  read -r primary secondary <<< "$dns_pair"
+# انتخاب کشور و نمایش DNS برای بازی انتخاب شده
+select_country_and_show_dns() {
+  local section=$1
+  local game=$2
   print_title
-  echo -e "${GREEN}DNS for $section game selected:${RESET}"
-  echo -e "Primary DNS  : $primary"
-  echo -e "Secondary DNS: $secondary"
+  echo -e "${CYAN}Selected Game: ${GREEN}$game${RESET}"
+  echo -e "${ORANGE}Select your country:${RESET}"
+  local i=1
+  for c in "${COUNTRIES[@]}"; do
+    echo "[$i] $c"
+    ((i++))
+  done
+  echo "[0] Back to game list"
   echo
-  # Ping test primary
-  echo -e "${CYAN}Pinging Primary DNS ($primary)...${RESET}"
-  ping -c 3 "$primary" 2>&1 | grep 'rtt\|time=' || echo -e "${RED}Ping failed or no response.${RESET}"
-  echo
-  # Ping test secondary
-  echo -e "${CYAN}Pinging Secondary DNS ($secondary)...${RESET}"
-  ping -c 3 "$secondary" 2>&1 | grep 'rtt\|time=' || echo -e "${RED}Ping failed or no response.${RESET}"
-  echo
-  read -rp "Press Enter to return to game list..." _
-  show_game_list "$section"
+  read -rp "Choose country: " country_opt
+  if [[ "$country_opt" == "0" ]]; then
+    show_game_list "$section"
+    return
+  fi
+  if (( country_opt < 1 || country_opt > ${#COUNTRIES[@]} )); then
+    echo -e "${RED}Invalid selection.${RESET}"
+    sleep 1
+    select_country_and_show_dns "$section" "$game"
+    return
+  fi
+  selected_country="${COUNTRIES[$country_opt-1]}"
+  show_dns_for_game_country "$game" "$selected_country"
 }
 
-# Show DNS list for sections like download or VPN
+# نمایش DNS با ping و بدون تکرار DNS قبلی
+show_dns_for_game_country() {
+  local game=$1
+  local country=$2
+  print_title
+  echo -e "${GREEN}Game: ${CYAN}$game${RESET}"
+  echo -e "${GREEN}Country: ${CYAN}$country${RESET}"
+
+  # انتخاب dns اولیه و ثانویه بدون تکرار
+  IFS=' ' read -r -a primaries <<< "${DNS_POOL_PRIMARY[$country]}"
+  IFS=' ' read -r -a secondaries <<< "${DNS_POOL_SECONDARY[$country]}"
+
+  # تابع برای انتخاب dns جدید از لیست بدون تکرار
+  select_new_dns() {
+    local -n dns_array=$1
+    local used_dns_ref=$2
+    local tries=0
+    local max_tries=100
+    local dns_ip=""
+    while (( tries < max_tries )); do
+      local idx=$(( RANDOM % ${#dns_array[@]} ))
+      dns_ip=${dns_array[$idx]}
+      if [[ -z "${used_dns_ref[$dns_ip]}" ]]; then
+        used_dns_ref[$dns_ip]=1
+        echo "$dns_ip"
+        return
+      fi
+      ((tries++))
+    done
+    # اگر نتونست dns جدید پیدا کنه، dns اول لیست رو برگردونه
+    echo "${dns_array[0]}"
+  }
+
+  primary_dns=$(select_new_dns primaries USED_DNS_PRIMARY)
+  secondary_dns=$(select_new_dns secondaries USED_DNS_SECONDARY)
+
+  echo -e "Primary DNS  : $primary_dns"
+  echo -e "Secondary DNS: $secondary_dns"
+  echo
+
+  echo -e "${CYAN}Pinging Primary DNS ($primary_dns)...${RESET}"
+  ping -c 3 "$primary_dns" 2>&1 | grep 'rtt\|time=' || echo -e "${RED}Ping failed or no response.${RESET}"
+  echo
+  echo -e "${CYAN}Pinging Secondary DNS ($secondary_dns)...${RESET}"
+  ping -c 3 "$secondary_dns" 2>&1 | grep 'rtt\|time=' || echo -e "${RED}Ping failed or no response.${RESET}"
+  echo
+
+  read -rp "Press Enter to return to main menu..." _
+  show_main_menu
+}
+
+# نمایش لیست DNS های دانلود یا VPN (مثال ساده)
 show_dns_list() {
-  section=$1
-  IFS=';' read -ra dns_pairs <<< "${DNS_POOLS[$section]}"
+  local section=$1
   print_title
   echo -e "${GREEN}$section DNS List:${RESET}"
-  count=1
-  for pair in "${dns_pairs[@]}"; do
-    read -r p s <<< "$pair"
-    echo -e "[$count] Primary: $p  | Secondary: $s"
-    ((count++))
-  done
+  echo -e "1. Primary: 1.1.1.1 | Secondary: 1.0.0.1"
+  echo -e "2. Primary: 8.8.8.8 | Secondary: 8.8.4.4"
   echo
   read -rp "Press Enter to return to main menu..." _
   show_main_menu
 }
 
-# Auto benchmark DNS (ping top 10 DNS pairs, sorted by avg ping)
+# بنچمارک خودکار DNS (برای نمونه فقط 5 dns اول)
 auto_benchmark() {
   print_title
-  echo -e "${YELLOW}Auto Benchmarking top 10 DNS pairs from PC pool...${RESET}"
-  IFS=';' read -ra dns_pairs <<< "${DNS_POOLS["pc"]}"
+  echo -e "${ORANGE}Auto Benchmark DNS - Top 5 from Iran DNS Pool:${RESET}"
+  IFS=' ' read -r -a dns_list <<< "${DNS_POOL_PRIMARY["Iran"]}"
   declare -A ping_results
-  for i in $(seq 0 9); do
-    read -r p s <<< "${dns_pairs[$i]}"
-    echo -e "${CYAN}Pinging $p ...${RESET}"
-    avg_ping=$(ping -c 4 "$p" | grep 'rtt' | awk -F '/' '{print $5}')
+  for dns in "${dns_list[@]:0:5}"; do
+    echo -e "${CYAN}Pinging $dns...${RESET}"
+    avg_ping=$(ping -c 4 "$dns" 2>/dev/null | grep 'rtt' | awk -F '/' '{print $5}')
     if [[ -z "$avg_ping" ]]; then avg_ping=999; fi
-    ping_results["$p $s"]=$avg_ping
+    ping_results["$dns"]=$avg_ping
   done
-
-  echo -e "${GREEN}\nBenchmark Results (sorted by avg ping):${RESET}"
+  echo -e "${GREEN}Benchmark results:${RESET}"
   for dns in "${!ping_results[@]}"; do
-    echo -e "$dns : ${ping_results[$dns]} ms"
+    echo "$dns : ${ping_results[$dns]} ms"
   done | sort -t: -k2 -n
-
   echo
   read -rp "Press Enter to return to main menu..." _
   show_main_menu
 }
 
-# Start
+# حلقه اصلی برنامه
 while true; do
   show_main_menu
 done
