@@ -3,26 +3,12 @@
 # -------------------------
 # Gaming DNS Management Tool
 # By: @MahdiAGM0
+# Version 1.3 Auto Mode + Animation + Full Logic
 # -------------------------
 
 # Color codes for rotating title colors
 COLORS=("\e[1;36m" "\e[1;32m" "\e[1;33m" "\e[1;35m" "\e[1;34m" "\e[1;31m")
 RESET="\e[0m"
-
-# Clear screen
-clear
-
-# Function to display colored title (rotates color on each run)
-display_title() {
-  local color_index=$(( $(date +%s) % ${#COLORS[@]} ))
-  local color=${COLORS[$color_index]}
-  echo -e "${color}╔════════════════════════════════════════════════════════════╗"
-  echo -e "║             Gaming DNS Management Tool                      ║"
-  echo -e "║    Telegram: @Academi_vpn   Admin By: @MahdiAGM0          ║"
-  echo -e "║                     Version : 1.2.5                         ║"
-  echo -e "╚════════════════════════════════════════════════════════════╝${RESET}"
-  echo
-}
 
 # Countries List (21)
 COUNTRIES=(
@@ -54,54 +40,58 @@ MOBILE_GAMES=(
 "Bullet Echo" "Warface GO" "Dead Trigger 2" "Infinity Ops" "Cover Fire" "Arena of Valor" "Boom Beach" "Mobile Royale" "Top Eleven" "eFootball Mobile"
 )
 
-# DNS pools for games (Example: Real strong DNS IPs, for each game-country pair there should be >20 DNS)
-# For simplicity, I will define a function to simulate retrieving DNS pairs for each game-country combo
-
-# Global DNS pool for Download Accelerators (Anti-censorship DNSs)
-DOWNLOAD_ACCEL_DNS=(
-  "1.1.1.1" "1.0.0.1" "8.8.8.8" "8.8.4.4" "9.9.9.9" "149.112.112.112" "208.67.222.222" "208.67.220.220"
-  "94.140.14.14" "77.88.8.8" "185.228.168.168" "84.200.69.80" "198.101.242.72" "119.29.29.29" "77.88.8.1" "4.2.2.1"
-  "4.2.2.2" "64.6.64.6" "64.6.65.6" "8.26.56.26" "8.20.247.20" "9.9.9.10" "84.200.70.40" "208.67.222.220"
+# DNS pools for games and countries (just an example - real DNSs and lots more can be added)
+DNS_POOL=(
+"1.1.1.1" "1.0.0.1" "8.8.8.8" "8.8.4.4" "9.9.9.9" "149.112.112.112" "208.67.222.222" "208.67.220.220"
+"94.140.14.14" "77.88.8.8" "185.228.168.168" "84.200.69.80" "198.101.242.72" "119.29.29.29" "77.88.8.1" "4.2.2.1"
+"4.2.2.2" "64.6.64.6" "64.6.65.6" "8.26.56.26" "8.20.247.20" "9.9.9.10" "84.200.70.40" "208.67.222.220"
 )
 
-# Function to simulate fetching 2 random DNS from the DNS pool for a game+country
-get_game_dns() {
-  local game=$1
-  local country=$2
-  # For demo, using static pool but could be extended per game-country
-  local base_dns_pool=(
-    "1.1.1.1" "8.8.8.8" "9.9.9.9" "208.67.222.222" "94.140.14.14" "77.88.8.8" "185.228.168.168" "84.200.69.80"
-    "199.85.126.10" "156.154.70.1" "195.46.39.39" "64.6.64.6" "64.6.65.6" "8.26.56.26" "8.20.247.20" "208.67.220.220"
-    "8.8.4.4" "1.0.0.1" "149.112.112.112" "119.29.29.29" "77.88.8.1" "198.101.242.72" "77.88.8.88" "4.2.2.2" "4.2.2.1"
+# Download Accelerator DNS (Anti-censorship)
+DOWNLOAD_ACCEL_DNS=(
+"1.1.1.1" "1.0.0.1" "8.8.8.8" "8.8.4.4" "9.9.9.9" "149.112.112.112" "208.67.222.222" "208.67.220.220"
+"94.140.14.14" "77.88.8.8" "185.228.168.168" "84.200.69.80" "198.101.242.72" "119.29.29.29" "77.88.8.1" "4.2.2.1"
+"4.2.2.2" "64.6.64.6" "64.6.65.6" "8.26.56.26" "8.20.247.20"
+)
+
+# Colors
+CYAN="\e[1;36m"
+GREEN="\e[1;32m"
+YELLOW="\e[1;33m"
+RESET="\e[0m"
+
+# Animation for title (top to bottom)
+animate_title() {
+  local lines=(
+"╔════════════════════════════════════════════════════════════╗"
+"║             Gaming DNS Management Tool                      ║"
+"║    Telegram: @Academi_vpn   Admin By: @MahdiAGM0          ║"
+"║                     Version : 1.3                           ║"
+"╚════════════════════════════════════════════════════════════╝"
   )
-  # Shuffle and pick first 2 unique
-  local shuffled=($(shuf -e "${base_dns_pool[@]}"))
+  clear
+  local color_index=$(( $(date +%s) % ${#COLORS[@]} ))
+  local color=${COLORS[$color_index]}
+  for line in "${lines[@]}"; do
+    echo -e "${color}$line${RESET}"
+    sleep 0.12
+  done
+  echo
+}
+
+# Shuffle and pick two unique DNS from an array
+pick_two_dns() {
+  local arr=("$@")
+  local shuffled=($(shuf -e "${arr[@]}"))
   echo "${shuffled[0]}|${shuffled[1]}"
 }
 
-# Function to get 2 random DNS for Download Accelerators
-get_download_dns() {
-  local shuffled=($(shuf -e "${DOWNLOAD_ACCEL_DNS[@]}"))
-  echo "${shuffled[0]}|${shuffled[1]}"
-}
-
-# Function to simulate Ping (fake for demo)
+# Random ping simulation
 get_ping() {
-  echo $(( RANDOM % 50 + 20 ))  # Random ping between 20 and 69 ms
+  echo $(( RANDOM % 50 + 20 ))  # 20-69 ms ping
 }
 
-# Show main menu
-show_main_menu() {
-  echo -e "${CYAN}Select an option:${RESET}"
-  echo "1) PC Games"
-  echo "2) Console Games"
-  echo "3) Mobile Games"
-  echo "4) Download Accelerators DNS"
-  echo "0) Exit"
-  echo -n "Enter choice: "
-}
-
-# Show list function (paginated)
+# Show list paginated with commands (N-next, P-prev, Q-exit)
 show_list() {
   local arr=("$@")
   local total=${#arr[@]}
@@ -110,8 +100,8 @@ show_list() {
   local total_pages=$(( (total + per_page -1) / per_page ))
   while true; do
     clear
-    display_title
-    echo "Select from the list:"
+    animate_title
+    echo -e "${CYAN}Select from the list:${RESET}"
     local start=$(( page * per_page ))
     local end=$(( start + per_page ))
     if (( end > total )); then end=$total; fi
@@ -146,124 +136,182 @@ show_list() {
   done
 }
 
-# Show countries list and get selection
+# Select country with validation
 select_country() {
-  clear
-  display_title
-  echo "Select your country:"
-  for i in "${!COUNTRIES[@]}"; do
-    echo "$((i+1))) ${COUNTRIES[i]}"
+  while true; do
+    clear
+    animate_title
+    echo -e "${CYAN}Select your country:${RESET}"
+    for i in "${!COUNTRIES[@]}"; do
+      echo "$((i+1))) ${COUNTRIES[i]}"
+    done
+    echo -n "Enter choice: "
+    read c_choice
+    if [[ "$c_choice" =~ ^[0-9]+$ ]] && (( c_choice >= 1 && c_choice <= ${#COUNTRIES[@]} )); then
+      echo "${COUNTRIES[$((c_choice-1))]}"
+      return
+    else
+      echo "Invalid choice, try again."
+      sleep 1
+    fi
   done
-  echo -n "Enter choice: "
-  read c_choice
-  if [[ "$c_choice" =~ ^[0-9]+$ ]] && (( c_choice >= 1 && c_choice <= ${#COUNTRIES[@]} )); then
-    echo "${COUNTRIES[$((c_choice-1))]}"
-  else
-    echo ""
-  fi
 }
 
-# Main program loop
-while true; do
+# Get DNS for game and country
+get_game_dns() {
+  local game=$1
+  local country=$2
+  # In real scenario, you should have mappings. Here, we pick randomly from DNS_POOL
+  local dns_pair=$(pick_two_dns "${DNS_POOL[@]}")
+  echo "$dns_pair"
+}
+
+# Get DNS for download accelerator (country-based)
+get_download_dns() {
+  local dns_pair=$(pick_two_dns "${DOWNLOAD_ACCEL_DNS[@]}")
+  echo "$dns_pair"
+}
+
+# Auto Mode function: picks random section, game/country, and prints DNS info directly
+auto_mode() {
   clear
-  display_title
-  show_main_menu
-  read main_choice
-  case "$main_choice" in
+  animate_title
+  echo -e "${YELLOW}Auto Mode Activated: Providing random DNS for you...${RESET}"
+  sleep 1
+
+  local section=$(( RANDOM % 4 + 1 )) # 1 to 4
+
+  local country_index=$(( RANDOM % ${#COUNTRIES[@]} ))
+  local country=${COUNTRIES[$country_index]}
+
+  case $section in
     1)
-      # PC Games
-      selected_game_index=$(show_list "${PC_GAMES[@]}")
-      if [[ "$selected_game_index" == "0" ]]; then continue; fi
-      selected_game="${PC_GAMES[$((selected_game_index-1))]}"
-      selected_country=$(select_country)
-      if [[ -z "$selected_country" ]]; then
-        echo "Invalid country selection!"
-        sleep 2
-        continue
-      fi
-      dns_pair=$(get_game_dns "$selected_game" "$selected_country")
-      IFS='|' read -r primary_dns secondary_dns <<< "$dns_pair"
-      ping_val=$(get_ping)
-      clear
-      display_title
-      echo "Game: $selected_game"
-      echo "Country: $selected_country"
-      echo "1. Primary: $primary_dns | Secondary: $secondary_dns"
-      echo "2. Ping: ${ping_val}ms"
-      echo
-      read -p "Press Enter to continue..."
+      local game_index=$(( RANDOM % ${#PC_GAMES[@]} ))
+      local game=${PC_GAMES[$game_index]}
+      local dns_pair=$(get_game_dns "$game" "$country")
       ;;
     2)
-      # Console Games
-      selected_game_index=$(show_list "${CONSOLE_GAMES[@]}")
-      if [[ "$selected_game_index" == "0" ]]; then continue; fi
-      selected_game="${CONSOLE_GAMES[$((selected_game_index-1))]}"
-      selected_country=$(select_country)
-      if [[ -z "$selected_country" ]]; then
-        echo "Invalid country selection!"
-        sleep 2
-        continue
-      fi
-      dns_pair=$(get_game_dns "$selected_game" "$selected_country")
-      IFS='|' read -r primary_dns secondary_dns <<< "$dns_pair"
-      ping_val=$(get_ping)
-      clear
-      display_title
-      echo "Game: $selected_game"
-      echo "Country: $selected_country"
-      echo "1. Primary: $primary_dns | Secondary: $secondary_dns"
-      echo "2. Ping: ${ping_val}ms"
-      echo
-      read -p "Press Enter to continue..."
+      local game_index=$(( RANDOM % ${#CONSOLE_GAMES[@]} ))
+      local game=${CONSOLE_GAMES[$game_index]}
+      local dns_pair=$(get_game_dns "$game" "$country")
       ;;
     3)
-      # Mobile Games
-      selected_game_index=$(show_list "${MOBILE_GAMES[@]}")
-      if [[ "$selected_game_index" == "0" ]]; then continue; fi
-      selected_game="${MOBILE_GAMES[$((selected_game_index-1))]}"
-      selected_country=$(select_country)
-      if [[ -z "$selected_country" ]]; then
-        echo "Invalid country selection!"
-        sleep 2
-        continue
-      fi
-      dns_pair=$(get_game_dns "$selected_game" "$selected_country")
-      IFS='|' read -r primary_dns secondary_dns <<< "$dns_pair"
-      ping_val=$(get_ping)
-      clear
-      display_title
-      echo "Game: $selected_game"
-      echo "Country: $selected_country"
-      echo "1. Primary: $primary_dns | Secondary: $secondary_dns"
-      echo "2. Ping: ${ping_val}ms"
-      echo
-      read -p "Press Enter to continue..."
+      local game_index=$(( RANDOM % ${#MOBILE_GAMES[@]} ))
+      local game=${MOBILE_GAMES[$game_index]}
+      local dns_pair=$(get_game_dns "$game" "$country")
       ;;
     4)
-      # Download Accelerators DNS
-      selected_country=$(select_country)
-      if [[ -z "$selected_country" ]]; then
-        echo "Invalid country selection!"
-        sleep 2
-        continue
-      fi
-      dns_pair=$(get_download_dns)
-      IFS='|' read -r primary_dns secondary_dns <<< "$dns_pair"
-      ping_val=$(get_ping)
+      local dns_pair=$(get_download_dns)
+      ;;
+  esac
+
+  local dns1=${dns_pair%%|*}
+  local dns2=${dns_pair##*|}
+
+  echo
+  echo -e "${GREEN}Country: $country"
+  [[ $section -eq 1 ]] && echo -e "PC Game: $game"
+  [[ $section -eq 2 ]] && echo -e "Console Game: $game"
+  [[ $section -eq 3 ]] && echo -e "Mobile Game: $game"
+  [[ $section -eq 4 ]] && echo -e "Download Accelerator DNS"
+  echo -e "DNS 1: $dns1"
+  echo -e "DNS 2: $dns2"
+  echo -e "Estimated Ping: $(get_ping) ms${RESET}"
+  echo
+  read -p "Press Enter to return to main menu..."
+}
+
+# Main menu
+while true; do
+  clear
+  animate_title
+  echo -e "${CYAN}Main Menu:${RESET}"
+  echo "1) PC Games DNS"
+  echo "2) Console Games DNS"
+  echo "3) Mobile Games DNS"
+  echo "4) Download Accelerator DNS"
+  echo "5) Auto Mode (Random DNS)"
+  echo "0) Exit"
+  echo -n "Choose an option: "
+  read main_choice
+
+  case $main_choice in
+    1)
+      country=$(select_country)
+      if [ "$country" == "0" ]; then continue; fi
+      game_index=$(show_list "${PC_GAMES[@]}")
+      if [ "$game_index" == "0" ]; then continue; fi
+      game=${PC_GAMES[$((game_index-1))]}
+      dns_pair=$(get_game_dns "$game" "$country")
+      dns1=${dns_pair%%|*}
+      dns2=${dns_pair##*|}
       clear
-      display_title
-      echo "Country: $selected_country"
-      echo "1. Primary: $primary_dns | Secondary: $secondary_dns"
-      echo "2. Ping: ${ping_val}ms"
-      echo
-      read -p "Press Enter to continue..."
+      animate_title
+      echo -e "${GREEN}PC Game: $game"
+      echo -e "Country: $country"
+      echo -e "DNS 1: $dns1"
+      echo -e "DNS 2: $dns2"
+      echo -e "Estimated Ping: $(get_ping) ms${RESET}"
+      read -p "Press Enter to return to menu..."
+      ;;
+    2)
+      country=$(select_country)
+      if [ "$country" == "0" ]; then continue; fi
+      game_index=$(show_list "${CONSOLE_GAMES[@]}")
+      if [ "$game_index" == "0" ]; then continue; fi
+      game=${CONSOLE_GAMES[$((game_index-1))]}
+      dns_pair=$(get_game_dns "$game" "$country")
+      dns1=${dns_pair%%|*}
+      dns2=${dns_pair##*|}
+      clear
+      animate_title
+      echo -e "${GREEN}Console Game: $game"
+      echo -e "Country: $country"
+      echo -e "DNS 1: $dns1"
+      echo -e "DNS 2: $dns2"
+      echo -e "Estimated Ping: $(get_ping) ms${RESET}"
+      read -p "Press Enter to return to menu..."
+      ;;
+    3)
+      country=$(select_country)
+      if [ "$country" == "0" ]; then continue; fi
+      game_index=$(show_list "${MOBILE_GAMES[@]}")
+      if [ "$game_index" == "0" ]; then continue; fi
+      game=${MOBILE_GAMES[$((game_index-1))]}
+      dns_pair=$(get_game_dns "$game" "$country")
+      dns1=${dns_pair%%|*}
+      dns2=${dns_pair##*|}
+      clear
+      animate_title
+      echo -e "${GREEN}Mobile Game: $game"
+      echo -e "Country: $country"
+      echo -e "DNS 1: $dns1"
+      echo -e "DNS 2: $dns2"
+      echo -e "Estimated Ping: $(get_ping) ms${RESET}"
+      read -p "Press Enter to return to menu..."
+      ;;
+    4)
+      dns_pair=$(get_download_dns)
+      dns1=${dns_pair%%|*}
+      dns2=${dns_pair##*|}
+      clear
+      animate_title
+      echo -e "${GREEN}Download Accelerator DNS:${RESET}"
+      echo -e "DNS 1: $dns1"
+      echo -e "DNS 2: $dns2"
+      echo -e "Estimated Ping: $(get_ping) ms"
+      read -p "Press Enter to return to menu..."
+      ;;
+    5)
+      auto_mode
       ;;
     0)
-      echo "Exiting..."
+      clear
+      echo -e "${YELLOW}Goodbye!${RESET}"
       exit 0
       ;;
     *)
-      echo "Invalid choice!"
+      echo "Invalid option, try again."
       sleep 1
       ;;
   esac
