@@ -1,387 +1,460 @@
 #!/bin/bash
 
-# ============== Clear Screen Function ===============
+# === Colors ===
+RED='\033[91m'
+GREEN='\033[92m'
+YELLOW='\033[93m'
+BLUE='\033[94m'
+MAGENTA='\033[95m'
+CYAN='\033[96m'
+RESET='\033[0m'
+
+colors=($RED $GREEN $YELLOW $BLUE $MAGENTA $CYAN)
+color=${colors[$RANDOM % ${#colors[@]}]}
+
+# Clear screen function
 clear_screen() {
-  command -v clear >/dev/null 2>&1 && clear || printf "\033c"
+    clear
 }
 
-# ============== Pause Function (wait for Enter) =======
-pause() {
-  echo
-  read -rp "Press Enter to return to the main menu..."
-}
-
-# ============== Print Colored Title ===================
-print_title() {
-  clear_screen
-  local colors=("\033[91m" "\033[92m" "\033[93m" "\033[94m" "\033[95m" "\033[96m")
-  local color=${colors[$RANDOM % ${#colors[@]}]}
-  echo -e "${color}╔════════════════════════════════════════════════════════════╗"
-  echo -e "║             Gaming DNS Management Tool                     ║"
-  echo -e "║     Telegram: @Academi_vpn   Admin By: @MahdiAGM0          ║"
-  echo -e "║                      Version : 1.2.6                        ║"
-  echo -e "╚════════════════════════════════════════════════════════════╝\033[0m"
-  echo
-}
-
-# ============== Simple animation from top to bottom =======
-simple_animation() {
-  for i in {1..10}; do
+# Header function with colored title
+header() {
     clear_screen
-    for ((j=1; j<=i; j++)); do
-      echo
-    done
-    echo "Loading... Please wait"
-    sleep 0.05
-  done
+    echo -e "${color}╔════════════════════════════════════════════════════════════╗"
+    echo -e "║            Gaming DNS Management Tool                      ║"
+    echo -e "║    Telegram: @Academi_vpn   Admin By: @MahdiAGM0          ║"
+    echo -e "║                    Version : 1.3.0                         ║"
+    echo -e "╚════════════════════════════════════════════════════════════╝${RESET}"
+    echo
 }
 
-# ============== Lists ==============
+# Pause and wait for Enter to return to main menu
+pause_return() {
+    echo
+    read -rp "Press Enter to return to the main menu..."
+}
 
-# Countries list
-countries=(
-  "Iran"
-  "USA"
-  "UK"
-  "Germany"
-  "France"
-  "Canada"
-  "Australia"
-  "Japan"
-  "South Korea"
-  "Russia"
-  "Brazil"
-  "India"
-  "China"
-  "Turkey"
-  "United Arab Emirates"
-  "Saudi Arabia"
-  "Netherlands"
-  "Sweden"
-  "Norway"
-  "Singapore"
-  "Mexico"
-)
+# Ping reminder text
+ping_reminder() {
+    echo -e "${YELLOW}(Use ping command to measure latency)${RESET}"
+}
 
-# PC games (40 items)
-pc_games=(
-  "Valorant" "Call of Duty" "Minecraft" "Fortnite" "League of Legends"
-  "Counter-Strike" "Overwatch" "Dota 2" "Apex Legends" "Rainbow Six Siege"
-  "PUBG PC" "Cyberpunk 2077" "GTA V" "FIFA 22" "Rocket League"
-  "Among Us" "Terraria" "Skyrim" "Fall Guys" "Dead by Daylight"
-  "The Witcher 3" "Assassin's Creed" "Battlefield V" "Hades" "Dark Souls"
-  "Star Wars Jedi" "Minecraft Dungeons" "Rust" "Ark Survival" "Warframe"
-  "Half-Life Alyx" "Sea of Thieves" "Destiny 2" "The Sims 4" "Metro Exodus"
-  "Civilization VI" "Stardew Valley" "Monster Hunter" "Diablo III" "Path of Exile"
-)
+# === Games and DNS Data ===
+declare -A dns_map
 
-# Mobile games (40 items)
+# Sample Mobile Games with fake but realistic DNS IPs (you can expand!)
 mobile_games=(
-  "PUBG Mobile" "Call of Duty Mobile" "Free Fire" "Genshin Impact" "Clash Royale"
-  "Clash of Clans" "Mobile Legends" "Among Us" "Arena Breakout" "Brawl Stars"
-  "Pokemon Go" "Candy Crush" "Minecraft Pocket Edition" "Subway Surfers" "Roblox Mobile"
-  "AFK Arena" "Garena Speed Drifters" "League of Legends Wild Rift" "State of Survival" "Mobile Legends Bang Bang"
-  "Summoners War" "Call of Dragons" "Mortal Kombat Mobile" "Lords Mobile" "Rise of Kingdoms"
-  "World War Heroes" "Shadowgun Legends" "Black Desert Mobile" "Dragon Raja" "Last Shelter"
-  "VainGlory" "MARVEL Future Fight" "Dead Trigger 2" "Farmville 2" "Modern Combat 5"
-  "Rules of Survival" "PUBG New State" "Knives Out" "GTA Mobile" "Dragon Ball Legends"
+    "PUBG Mobile"
+    "Free Fire"
+    "Call of Duty Mobile"
+    "Arena Breakout"
+    "Genshin Impact"
+    "Mobile Legends"
+    "Clash of Clans"
+    "Among Us"
+    "Minecraft Pocket Edition"
+    "Roblox Mobile"
+    "Brawl Stars"
+    "Fortnite Mobile"
+    "Apex Legends Mobile"
+    "Wild Rift"
+    "Pokemon Go"
+    "League of Legends Mobile"
+    "Shadowgun Legends"
+    "Dead Trigger 2"
+    "Critical Ops"
+    "Rules of Survival"
+    "Asphalt 9"
+    "Honkai Impact 3rd"
+    "State of Survival"
+    "Dragon Raja"
+    "Garena Speed Drifters"
+    "Summoners War"
+    "Last Day on Earth"
+    "Among Us"
+    "Call of Dragons"
+    "Minecraft"
+    "Fortnite"
+    "Roblox"
+    "Apex Legends"
+    "Valorant"
+    "League of Legends"
+    "CS:GO"
+    "Overwatch"
+    "Dota 2"
+    "Rainbow Six Siege"
 )
 
-# Console games (40 items)
-console_games=(
-  "The Last of Us" "God of War" "Spider-Man" "Halo Infinite" "Forza Horizon"
-  "Ghost of Tsushima" "Animal Crossing" "Cyberpunk 2077" "Red Dead Redemption 2" "Gran Turismo"
-  "Super Mario Odyssey" "FIFA 22" "Call of Duty" "Mortal Kombat 11" "Minecraft"
-  "Destiny 2" "Fortnite" "Assassin's Creed Valhalla" "Battlefield 2042" "Overwatch"
-  "Rocket League" "Death Stranding" "Gears 5" "Persona 5" "NBA 2K22"
-  "Resident Evil Village" "Cuphead" "Apex Legends" "Metro Exodus" "Sekiro"
-  "Final Fantasy VII" "Monster Hunter World" "Bayonetta" "Tetris Effect" "Yakuza 7"
-  "Marvel's Avengers" "Control" "Dark Souls III" "Watch Dogs Legion" "Dishonored 2"
+# Countries list (add more as needed)
+countries=(
+    "USA"
+    "Iran"
+    "Germany"
+    "Japan"
+    "South Korea"
+    "Turkey"
+    "United Arab Emirates"
+    "Saudi Arabia"
+    "France"
+    "Canada"
+    "Australia"
+    "Russia"
+    "India"
+    "Brazil"
+    "Mexico"
+    "Singapore"
+    "Netherlands"
+    "Sweden"
+    "Italy"
+    "Spain"
 )
 
-# DNS lists (realistic examples, you can expand them)
-declare -A dns_pc=(
-  ["USA"]="8.8.8.8|8.8.4.4"
-  ["Iran"]="185.51.200.2|185.51.200.3"
-  ["Germany"]="9.9.9.9|149.112.112.112"
-  ["Japan"]="1.1.1.1|1.0.0.1"
-  ["South Korea"]="223.130.195.95|223.130.195.91"
-  ["Saudi Arabia"]="188.165.196.154|188.165.196.152"
-  ["UK"]="77.88.8.8|77.88.8.1"
-)
-
-declare -A dns_mobile=(
-  ["USA"]="8.8.8.8|8.8.4.4"
-  ["Iran"]="185.51.200.2|185.51.200.3"
-  ["Germany"]="9.9.9.9|149.112.112.112"
-  ["Japan"]="1.1.1.1|1.0.0.1"
-  ["South Korea"]="223.130.195.95|223.130.195.91"
-  ["Saudi Arabia"]="188.165.196.154|188.165.196.152"
-  ["UK"]="77.88.8.8|77.88.8.1"
-)
-
-declare -A dns_console=(
-  ["USA"]="8.8.8.8|8.8.4.4"
-  ["Iran"]="185.51.200.2|185.51.200.3"
-  ["Germany"]="9.9.9.9|149.112.112.112"
-  ["Japan"]="1.1.1.1|1.0.0.1"
-  ["South Korea"]="223.130.195.95|223.130.195.91"
-  ["Saudi Arabia"]="188.165.196.154|188.165.196.152"
-  ["UK"]="77.88.8.8|77.88.8.1"
-)
-
-declare -A dns_download=(
-  ["Global"]="8.8.8.8|8.8.4.4"
-  ["Iran"]="185.51.200.2|185.51.200.3"
-  ["VPN"]="209.222.18.222|209.222.18.218"
-  ["ShadowDNS"]="104.223.91.95|104.223.91.96"
-)
-
-# ============== Functions ==============
-
-# Show list of countries, let user select, return selected country
-choose_country() {
-  echo "Select a country:"
-  local i=1
-  for c in "${countries[@]}"; do
-    echo "  $i) $c"
-    ((i++))
-  done
-  echo "  0) Back"
-  echo
-  while true; do
-    read -rp "Enter number: " num
-    if [[ "$num" =~ ^[0-9]+$ ]]; then
-      if (( num == 0 )); then
-        return 1 # signal to go back
-      elif (( num >= 1 && num <= ${#countries[@]} )); then
-        country="${countries[num-1]}"
-        return 0
-      else
-        echo "Invalid choice, try again."
-      fi
-    else
-      echo "Please enter a valid number."
-    fi
-  done
-}
-
-# Show DNS for given country & game type
-show_dns() {
-  local -n dns_arr=$1
-  echo
-  echo "Country: $country"
-  IFS='|' read -r primary secondary <<<"${dns_arr[$country]}"
-  echo "1. Primary: $primary | Secondary: $secondary"
-  echo "2. Ping: (use ping command to measure)"
-  echo
-  pause
-}
-
-# List PC games, choose one
-pc_games_menu() {
-  while true; do
-    clear_screen
-    print_title
-    echo "PC Games:"
-    local i=1
-    for g in "${pc_games[@]}"; do
-      echo "  $i) $g"
-      ((i++))
+# Fill dns_map for Mobile Games (example with random realistic DNS)
+for game in "${mobile_games[@]}"; do
+    for country in "${countries[@]}"; do
+        key="${game}-${country}"
+        dns_map["$key"]="1.1.1.1|1.0.0.1,8.8.8.8|8.8.4.4,9.9.9.9|149.112.112.112,208.67.222.222|208.67.220.220"
     done
-    echo "  0) Back"
-    echo
-    read -rp "Choose a game number: " choice
-    if [[ "$choice" =~ ^[0-9]+$ ]]; then
-      if (( choice == 0 )); then
-        break
-      elif (( choice >= 1 && choice <= ${#pc_games[@]} )); then
-        selected_game="${pc_games[choice-1]}"
-        # select country
-        choose_country || continue
-        show_dns dns_pc
-      else
-        echo "Invalid selection"
-        pause
-      fi
-    else
-      echo "Enter a valid number"
-      pause
-    fi
-  done
-}
+done
 
-# List Mobile games
-mobile_games_menu() {
-  while true; do
-    clear_screen
-    print_title
-    echo "Mobile Games:"
-    local i=1
-    for g in "${mobile_games[@]}"; do
-      echo "  $i) $g"
-      ((i++))
-    done
-    echo "  0) Back"
-    echo
-    read -rp "Choose a game number: " choice
-    if [[ "$choice" =~ ^[0-9]+$ ]]; then
-      if (( choice == 0 )); then
-        break
-      elif (( choice >= 1 && choice <= ${#mobile_games[@]} )); then
-        selected_game="${mobile_games[choice-1]}"
-        choose_country || continue
-        show_dns dns_mobile
-      else
-        echo "Invalid selection"
-        pause
-      fi
-    else
-      echo "Enter a valid number"
-      pause
-    fi
-  done
-}
+# Similarly, you can create PC Games and Console Games arrays and their dns_map entries
 
-# List Console games
-console_games_menu() {
-  while true; do
-    clear_screen
-    print_title
-    echo "Console Games:"
-    local i=1
-    for g in "${console_games[@]}"; do
-      echo "  $i) $g"
-      ((i++))
-    done
-    echo "  0) Back"
-    echo
-    read -rp "Choose a game number: " choice
-    if [[ "$choice" =~ ^[0-9]+$ ]]; then
-      if (( choice == 0 )); then
-        break
-      elif (( choice >= 1 && choice <= ${#console_games[@]} )); then
-        selected_game="${console_games[choice-1]}"
-        choose_country || continue
-        show_dns dns_console
-      else
-        echo "Invalid selection"
-        pause
-      fi
-    else
-      echo "Enter a valid number"
-      pause
-    fi
-  done
-}
+# === DNS Generators for Saudi, Turkey, UAE ===
 
-# Download DNS menu
-download_dns_menu() {
-  while true; do
-    clear_screen
-    print_title
-    echo "Download DNS Options:"
-    local keys=("${!dns_download[@]}")
-    local i=1
-    for k in "${keys[@]}"; do
-      echo "  $i) $k"
-      ((i++))
-    done
-    echo "  0) Back"
-    echo
-    read -rp "Choose an option: " choice
-    if [[ "$choice" =~ ^[0-9]+$ ]]; then
-      if (( choice == 0 )); then
-        break
-      elif (( choice >= 1 && choice <= ${#keys[@]} )); then
-        key="${keys[choice-1]}"
-        clear_screen
-        print_title
-        echo "$key DNS:"
-        IFS='|' read -r primary secondary <<<"${dns_download[$key]}"
-        echo "1. Primary: $primary | Secondary: $secondary"
-        echo "2. Ping: (use ping command to measure)"
-        pause
-      else
-        echo "Invalid selection"
-        pause
-      fi
-    else
-      echo "Enter a valid number"
-      pause
-    fi
-  done
-}
-
-# Saudi Arabia DNS Generator (IPv4 & IPv6)
 generate_ipv4_saudi() {
-  echo "188.$((RANDOM % 256)).$((RANDOM % 256)).$((RANDOM % 256))"
+    echo "188.$((RANDOM%256)).$((RANDOM%256)).$((RANDOM%256))"
 }
 
 generate_ipv6_saudi() {
-  printf "2a03:%04x:%04x::%04x:%04x\n" $((RANDOM % 65536)) $((RANDOM % 65536)) $((RANDOM % 65536)) $((RANDOM % 65536))
+    printf "2a03:%04x:%04x::%04x:%04x\n" $((RANDOM%65536)) $((RANDOM%65536)) $((RANDOM%65536)) $((RANDOM%65536))
 }
 
-saudi_dns_generator_menu() {
-  while true; do
-    clear_screen
-    print_title
-    echo "Saudi Arabia DNS Generator"
-    echo
-    read -rp "Choose IP version (4 or 6) or 0 to go back: " ipver
-    if [[ "$ipver" == "0" ]]; then
-      break
-    elif [[ "$ipver" != "4" && "$ipver" != "6" ]]; then
-      echo "Invalid input, enter 4 or 6."
-      pause
-      continue
-    fi
-    read -rp "How many DNS addresses do you want? " count
-    if ! [[ "$count" =~ ^[0-9]+$ ]]; then
-      echo "Please enter a valid number."
-      pause
-      continue
-    fi
-    echo
-    echo "Generating $count DNS addresses for Saudi Arabia (IPv$ipver):"
-    for ((i=1; i<=count; i++)); do
-      if [[ "$ipver" == "4" ]]; then
-        dns=$(generate_ipv4_saudi)
-      else
-        dns=$(generate_ipv6_saudi)
-      fi
-      echo "$i. $dns"
+generate_ipv4_turkey() {
+    echo "185.$((RANDOM%256)).$((RANDOM%256)).$((RANDOM%256))"
+}
+
+generate_ipv6_turkey() {
+    printf "2a03:%04x:%04x::%04x:%04x\n" $((RANDOM%65536)) $((RANDOM%65536)) $((RANDOM%65536)) $((RANDOM%65536))
+}
+
+generate_ipv4_uae() {
+    echo "185.$((128 + RANDOM%64)).$((RANDOM%256)).$((RANDOM%256))"
+}
+
+generate_ipv6_uae() {
+    printf "2a02:%04x:%04x::%04x:%04x\n" $((RANDOM%65536)) $((RANDOM%65536)) $((RANDOM%65536)) $((RANDOM%65536))
+}
+
+dns_generator_menu() {
+    while true; do
+        header
+        echo "DNS Generators:"
+        echo "1) Saudi Arabia"
+        echo "2) Turkey"
+        echo "3) United Arab Emirates"
+        echo "4) Back to main menu"
+        echo
+        read -rp "Choose an option: " dns_choice
+        case $dns_choice in
+            1)
+                dns_generate_saudi
+                ;;
+            2)
+                dns_generate_turkey
+                ;;
+            3)
+                dns_generate_uae
+                ;;
+            4)
+                return
+                ;;
+            *)
+                echo -e "${RED}Invalid option! Try again.${RESET}"
+                ;;
+        esac
     done
-    pause
-  done
 }
 
-# ============== Main Menu ==============
-
-main_menu() {
-  while true; do
-    simple_animation
-    print_title
-    echo "Main Menu:"
-    echo " 1) PC Games"
-    echo " 2) Mobile Games"
-    echo " 3) Console Games"
-    echo " 4) Download DNS"
-    echo " 5) Saudi Arabia DNS Generator"
-    echo " 0) Exit"
+dns_generate_saudi() {
+    header
+    echo "Saudi Arabia DNS Generator"
+    read -rp "IPv4 or IPv6? (4/6): " ip_ver
+    if [[ "$ip_ver" != "4" && "$ip_ver" != "6" ]]; then
+        echo -e "${RED}Invalid choice.${RESET}"
+        pause_return
+        return
+    fi
+    read -rp "How many DNS addresses do you want?: " count
+    if ! [[ "$count" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}Please enter a valid number.${RESET}"
+        pause_return
+        return
+    fi
     echo
-    read -rp "Enter your choice: " choice
-    case $choice in
-      1) pc_games_menu ;;
-      2) mobile_games_menu ;;
-      3) console_games_menu ;;
-      4) download_dns_menu ;;
-      5) saudi_dns_generator_menu ;;
-      0) echo "Goodbye!"; exit 0 ;;
-      *) echo "Invalid option, try again."; pause ;;
-    esac
-  done
+    echo "Generated DNS addresses:"
+    for ((i=0; i<count; i++)); do
+        if [ "$ip_ver" == "4" ]; then
+            echo "$(generate_ipv4_saudi)"
+        else
+            echo "$(generate_ipv6_saudi)"
+        fi
+    done
+    pause_return
 }
 
-# ============== Run Program ==============
+dns_generate_turkey() {
+    header
+    echo "Turkey DNS Generator"
+    read -rp "IPv4 or IPv6? (4/6): " ip_ver
+    if [[ "$ip_ver" != "4" && "$ip_ver" != "6" ]]; then
+        echo -e "${RED}Invalid choice.${RESET}"
+        pause_return
+        return
+    fi
+    read -rp "How many DNS addresses do you want?: " count
+    if ! [[ "$count" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}Please enter a valid number.${RESET}"
+        pause_return
+        return
+    fi
+    echo
+    echo "Generated DNS addresses:"
+    for ((i=0; i<count; i++)); do
+        if [ "$ip_ver" == "4" ]; then
+            echo "$(generate_ipv4_turkey)"
+        else
+            echo "$(generate_ipv6_turkey)"
+        fi
+    done
+    pause_return
+}
+
+dns_generate_uae() {
+    header
+    echo "United Arab Emirates DNS Generator"
+    read -rp "IPv4 or IPv6? (4/6): " ip_ver
+    if [[ "$ip_ver" != "4" && "$ip_ver" != "6" ]]; then
+        echo -e "${RED}Invalid choice.${RESET}"
+        pause_return
+        return
+    fi
+    read -rp "How many DNS addresses do you want?: " count
+    if ! [[ "$count" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}Please enter a valid number.${RESET}"
+        pause_return
+        return
+    fi
+    echo
+    echo "Generated DNS addresses:"
+    for ((i=0; i<count; i++)); do
+        if [ "$ip_ver" == "4" ]; then
+            echo "$(generate_ipv4_uae)"
+        else
+            echo "$(generate_ipv6_uae)"
+        fi
+    done
+    pause_return
+}
+
+# === Main Menu ===
+main_menu() {
+    while true; do
+        header
+        echo "Main Menu:"
+        echo "1) Mobile Games DNS"
+        echo "2) PC Games DNS"
+        echo "3) Console Games DNS"
+        echo "4) Download DNS (VPN-Friendly)"
+        echo "5) DNS Generators"
+        echo "6) Exit"
+        echo
+        read -rp "Enter number: " choice
+        case $choice in
+            1) game_menu "Mobile" ;;
+            2) game_menu "PC" ;;
+            3) game_menu "Console" ;;
+            4) download_dns ;;
+            5) dns_generator_menu ;;
+            6) echo "Goodbye!"; exit 0 ;;
+            *) echo -e "${RED}Invalid option. Try again.${RESET}"; pause_return ;;
+        esac
+    done
+}
+
+# === Game menus ===
+
+# For demonstration, PC and Console games are less populated
+
+pc_games=(
+    "Valorant"
+    "Counter Strike Global Offensive"
+    "Call of Duty Warzone"
+    "Minecraft Java Edition"
+    "Fortnite"
+    "Apex Legends"
+    "Overwatch"
+    "Dota 2"
+    "League of Legends"
+    "Rainbow Six Siege"
+)
+
+console_games=(
+    "FIFA 23"
+    "Call of Duty Modern Warfare"
+    "Halo Infinite"
+    "The Last of Us"
+    "God of War"
+    "Gears of War"
+    "Spider-Man"
+    "Red Dead Redemption 2"
+    "Fortnite Console"
+    "Minecraft Console Edition"
+)
+
+# DNS entries (fake but realistic examples for PC and Console)
+for game in "${pc_games[@]}"; do
+    for country in "${countries[@]}"; do
+        key="${game}-${country}"
+        dns_map["$key"]="8.8.8.8|8.8.4.4,1.1.1.1|1.0.0.1,9.9.9.9|149.112.112.112"
+    done
+done
+
+for game in "${console_games[@]}"; do
+    for country in "${countries[@]}"; do
+        key="${game}-${country}"
+        dns_map["$key"]="208.67.222.222|208.67.220.220,8.8.8.8|8.8.4.4,1.1.1.1|1.0.0.1"
+    done
+done
+
+game_menu() {
+    local category="$1"
+    local games_list
+
+    case $category in
+        Mobile) games_list=("${mobile_games[@]}") ;;
+        PC) games_list=("${pc_games[@]}") ;;
+        Console) games_list=("${console_games[@]}") ;;
+        *) echo "Unknown category"; return ;;
+    esac
+
+    while true; do
+        header
+        echo "$category Games:"
+        for i in "${!games_list[@]}"; do
+            echo "$((i+1))) ${games_list[i]}"
+        done
+        echo "$(( ${#games_list[@]} + 1 ))) Back to main menu"
+        echo
+        read -rp "Select a game by number: " game_choice
+
+        if ! [[ "$game_choice" =~ ^[0-9]+$ ]] || (( game_choice < 1 || game_choice > ${#games_list[@]} + 1 )); then
+            echo -e "${RED}Invalid choice, try again.${RESET}"
+            pause_return
+            continue
+        fi
+
+        if (( game_choice == ${#games_list[@]} + 1 )); then
+            return
+        fi
+
+        local selected_game="${games_list[game_choice-1]}"
+        country_menu "$category" "$selected_game"
+    done
+}
+
+country_menu() {
+    local category="$1"
+    local game="$2"
+
+    while true; do
+        header
+        echo "Game: $game"
+        echo "Select Country:"
+        for i in "${!countries[@]}"; do
+            echo "$((i+1))) ${countries[i]}"
+        done
+        echo "$(( ${#countries[@]} + 1 )) ) Back to $category Games Menu"
+        echo
+        read -rp "Select country by number: " country_choice
+
+        if ! [[ "$country_choice" =~ ^[0-9]+$ ]] || (( country_choice < 1 || country_choice > ${#countries[@]} + 1 )); then
+            echo -e "${RED}Invalid choice, try again.${RESET}"
+            pause_return
+            continue
+        fi
+
+        if (( country_choice == ${#countries[@]} + 1 )); then
+            return
+        fi
+
+        local selected_country="${countries[country_choice-1]}"
+        show_dns "$game" "$selected_country"
+    done
+}
+
+show_dns() {
+    local game="$1"
+    local country="$2"
+    local key="${game}-${country}"
+    local dns_list="${dns_map[$key]}"
+
+    header
+    echo "Game: $game"
+    echo "Country: $country"
+    echo "---------------------------------"
+    local i=1
+    IFS=',' read -ra dns_arr <<< "$dns_list"
+    for dns_pair in "${dns_arr[@]}"; do
+        IFS='|' read -ra ips <<< "$dns_pair"
+        echo "$i. Primary: ${ips[0]} | Secondary: ${ips[1]}"
+        ((i++))
+    done
+    echo
+    ping_reminder
+    pause_return
+}
+
+# Download DNS (VPN-Friendly example)
+download_dns() {
+    header
+    echo "Download DNS (VPN-Friendly, including unblockers):"
+    echo "1) Cloudflare DNS - 1.1.1.1 | 1.0.0.1"
+    echo "2) Google DNS - 8.8.8.8 | 8.8.4.4"
+    echo "3) Quad9 DNS - 9.9.9.9 | 149.112.112.112"
+    echo "4) OpenDNS - 208.67.222.222 | 208.67.220.220"
+    echo "5) Back to Main Menu"
+    echo
+    read -rp "Choose an option: " dl_choice
+    case $dl_choice in
+        1)
+            echo -e "\nPrimary: 1.1.1.1 | Secondary: 1.0.0.1"
+            ping_reminder
+            pause_return
+            ;;
+        2)
+            echo -e "\nPrimary: 8.8.8.8 | Secondary: 8.8.4.4"
+            ping_reminder
+            pause_return
+            ;;
+        3)
+            echo -e "\nPrimary: 9.9.9.9 | Secondary: 149.112.112.112"
+            ping_reminder
+            pause_return
+            ;;
+        4)
+            echo -e "\nPrimary: 208.67.222.222 | Secondary: 208.67.220.220"
+            ping_reminder
+            pause_return
+            ;;
+        5)
+            return
+            ;;
+        *)
+            echo -e "${RED}Invalid option, returning to main menu.${RESET}"
+            pause_return
+            ;;
+    esac
+}
+
+# Start script
 main_menu
