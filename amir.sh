@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =======================================
-# Game DNS Manager - Version 2.8.0
+# Game DNS Manager - Version 3.0.0
 # Telegram: @Academi_vpn
 # Admin By: @MahdiAGM0
 # =======================================
@@ -11,8 +11,8 @@ set -u
 COLORS=("\e[1;31m" "\e[1;32m" "\e[1;33m" "\e[1;34m" "\e[1;35m" "\e[1;36m")
 RESET="\e[0m"
 
-fast_type() { # ultra-fast typer for title lines
-  local s="$1" d="${2:-0.0025}"
+fast_type() { # very fast typer
+  local s="$1" d="${2:-0.002}"
   local i; for ((i=0;i<${#s};i++)); do echo -ne "${s:$i:1}"; sleep "$d"; done; echo
 }
 
@@ -20,13 +20,13 @@ title() {
   clear
   local C="${COLORS[$((RANDOM % ${#COLORS[@]}))]}"
   echo -e "${C}"
-  fast_type "╔════════════════════════════════════════════╗"
-  fast_type "║            GAME DNS MANAGEMENT             ║"
-  fast_type "╠════════════════════════════════════════════╣"
-  fast_type "║ Version: 2.8.0                             ║"
-  fast_type "║ Telegram: @Academi_vpn                     ║"
-  fast_type "║ Admin:    @MahdiAGM0                       ║"
-  fast_type "╚════════════════════════════════════════════╝"
+  fast_type "╔════════════════════════════════════════════╗" 0.002
+  fast_type "║            GAME DNS MANAGEMENT             ║" 0.002
+  fast_type "╠════════════════════════════════════════════╣" 0.002
+  fast_type "║ Version: 3.0.0                             ║" 0.0015
+  fast_type "║ Telegram: @Academi_vpn                     ║" 0.0015
+  fast_type "║ Admin:    @MahdiAGM0                       ║" 0.0015
+  fast_type "╚════════════════════════════════════════════╝" 0.002
   echo -e "${RESET}"
 }
 
@@ -34,69 +34,71 @@ footer() {
   local C="${COLORS[$((RANDOM % ${#COLORS[@]}))]}"
   echo -e "${C}"
   echo "========================================"
-  echo " Version: 2.8.0 | @Academi_vpn | @MahdiAGM0"
+  echo " Version: 3.0.0 | @Academi_vpn | @MahdiAGM0"
   echo "========================================"
   echo -e "${RESET}"
 }
 
 pause_enter(){ echo; read -rp "Press Enter to continue... " _; }
 has_cmd(){ command -v "$1" >/dev/null 2>&1; }
-slug(){ echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g;s/-\+/-/g;s/^-//;s/-$//'; }
 
-# ---------- Cache (no sudo, home dir) ----------
-CACHE_DIR="${HOME}/.dns_gamer_cache"
-mkdir -p "$CACHE_DIR" 2>/dev/null || {
-  echo "⚠️ Cannot create $HOME cache. Using local folder."
-  CACHE_DIR="./.dns_gamer_cache"
-  mkdir -p "$CACHE_DIR" || { echo "❌ Cannot create cache dir."; exit 1; }
+# ---------- Ping / Latency (no sudo, no bc, no timeout) ----------
+# تلاش اول: ping (IPv4/IPv6). تلاش دوم: dig (qtime). در غیر این صورت: 9999ms
+_extract_ms() { # gets "xx.xx" or "xx" and returns integer
+  local raw="$1"
+  raw="${raw%%ms*}"
+  raw="${raw%% *}"
+  raw="${raw%%.*}"
+  [[ "$raw" =~ ^[0-9]+$ ]] && echo "$raw" || echo 9999
 }
 
-# ---------- Latency measurement ----------
-ping_ms_ipv4(){
+ping_ms_v4(){
   local ip="$1" t
   if has_cmd ping; then
-    t=$(ping -n -c 1 -W 1 "$ip" 2>/dev/null | awk -F'time=' '/time=/{print $2}' | cut -d' ' -f1)
-    [[ -n "$t" ]] && { printf "%.0f\n" "$t"; return; }
+    # BusyBox/inetutils/iputils formats supported
+    t=$(ping -n -c 1 -W 1 "$ip" 2>/dev/null | awk -F'time=' '/time=/{print $2}' | head -n1)
+    if [[ -n "$t" ]]; then _extract_ms "$t"; return; fi
   fi
   if has_cmd dig; then
-    t=$(timeout 1 dig +tries=1 +time=1 @"$ip" example.com A 2>/dev/null | awk '/Query time:/ {print $4}')
-    [[ -n "$t" ]] && { echo "$t"; return; }
+    t=$(dig +tries=1 +time=1 @"$ip" example.com A 2>/dev/null | awk '/Query time:/ {print $4}' | head -n1)
+    if [[ -n "$t" ]]; then _extract_ms "$t"; return; fi
   fi
   echo 9999
 }
 
-ping_ms_ipv6(){
+ping_ms_v6(){
   local ip="$1" t
+  if has_cmd ping; then
+    t=$(ping -6 -n -c 1 -W 1 "$ip" 2>/dev/null | awk -F'time=' '/time=/{print $2}' | head -n1)
+    if [[ -n "$t" ]]; then _extract_ms "$t"; return; fi
+  fi
   if has_cmd ping6; then
-    t=$(ping6 -n -c 1 -W 1 "$ip" 2>/dev/null | awk -F'time=' '/time=/{print $2}' | cut -d' ' -f1)
-    [[ -n "$t" ]] && { printf "%.0f\n" "$t"; return; }
+    t=$(ping6 -n -c 1 -W 1 "$ip" 2>/dev/null | awk -F'time=' '/time=/{print $2}' | head -n1)
+    if [[ -n "$t" ]]; then _extract_ms "$t"; return; fi
   fi
   if has_cmd dig; then
-    t=$(timeout 1 dig +tries=1 +time=1 @"$ip" example.com AAAA 2>/dev/null | awk '/Query time:/ {print $4}')
-    [[ -n "$t" ]] && { echo "$t"; return; }
+    t=$(dig +tries=1 +time=1 @"$ip" example.com AAAA 2>/dev/null | awk '/Query time:/ {print $4}' | head -n1)
+    if [[ -n "$t" ]]; then _extract_ms "$t"; return; fi
   fi
   echo 9999
 }
 
 measure_ms(){
   local ip="$1"
-  [[ "$ip" == *:* ]] && ping_ms_ipv6 "$ip" || ping_ms_ipv4 "$ip"
+  if [[ "$ip" == *:* ]]; then ping_ms_v6 "$ip"; else ping_ms_v4 "$ip"; fi
 }
 
-best_two_threshold(){
+# انتخاب دو DNS برتر با آستانه‌ها 50/80/120ms و در نهایت بهترین موجود
+_best_two_threshold(){
   local thr="$1"; shift
   local -a ips=( "$@" )
   local -a pairs=()
-  local ip ms idx=0
+  local ip ms cnt=0
   for ip in "${ips[@]}"; do
     [[ -z "$ip" ]] && continue
-    ms=$(measure_ms "$ip")
-    [[ "$ms" =~ ^[0-9]+(\.[0-9]+)?$ ]] || ms=9999
-    (( idx++ % 14 == 0 )) && echo -ne "."
-    # keep if under threshold
-    if (( $(printf "%s <= %s\n" "$ms" "$thr" | bc -l) )); then
-      pairs+=("$ms $ip")
-    fi
+    ms=$(measure_ms "$ip"); ms=$(_extract_ms "$ms")
+    (( (cnt+=1) % 16 == 0 )) && echo -ne "."
+    (( ms <= thr )) && pairs+=("$ms $ip")
   done
   echo
   if [ "${#pairs[@]}" -eq 0 ]; then
@@ -109,34 +111,28 @@ best_two_threshold(){
 pick_best_two(){
   local -a pool=( "$@" )
   local out
-  out=$(best_two_threshold 50 "${pool[@]}"); [[ -n "$out" ]] && { echo "$out"; return; }
-  out=$(best_two_threshold 80 "${pool[@]}"); [[ -n "$out" ]] && { echo "$out"; return; }
-  out=$(best_two_threshold 120 "${pool[@]}"); [[ -n "$out" ]] && { echo "$out"; return; }
-  # final: pick best two regardless of threshold
-  declare -a pairs=()
-  local ip ms
-  for ip in "${pool[@]}"; do
-    ms=$(measure_ms "$ip"); [[ "$ms" =~ ^[0-9]+(\.[0-9]+)?$ ]] || ms=9999
-    pairs+=("$ms $ip")
-  done
+  out=$(_best_two_threshold 50 "${pool[@]}"); [[ -n "$out" ]] && { echo "$out"; return; }
+  out=$(_best_two_threshold 80 "${pool[@]}"); [[ -n "$out" ]] && { echo "$out"; return; }
+  out=$(_best_two_threshold 120 "${pool[@]}"); [[ -n "$out" ]] && { echo "$out"; return; }
+  # pick best two regardless
+  local -a pairs=(); local ip ms
+  for ip in "${pool[@]}"; do ms=$(measure_ms "$ip"); ms=$(_extract_ms "$ms"); pairs+=("$ms $ip"); done
   printf "%s\n" "${pairs[@]}" | sort -n -k1,1 | awk '{print $2"|" $1}' | head -n 2
 }
 
 show_primary_secondary(){
-  local lines="$1"
-  local a b ip ms
-  a=$(echo "$lines" | sed -n '1p')
-  b=$(echo "$lines" | sed -n '2p')
+  local lines="$1" a b ip ms
+  a=$(echo "$lines" | sed -n '1p'); b=$(echo "$lines" | sed -n '2p')
   if [ -n "$a" ]; then ip="${a%%|*}"; ms="${a##*|}"; printf "Primary DNS:   %-18s → %sms\n" "$ip" "$ms"; fi
   if [ -n "$b" ]; then ip="${b%%|*}"; ms="${b##*|}"; printf "Secondary DNS: %-18s → %sms\n" "$ip" "$ms"; fi
 }
 
 print_numbered(){
-  local -a arr=( "$@" ); local i=1
-  for line in "${arr[@]}"; do ip="${line%%|*}"; ms="${line##*|}"; printf "%3d) %-18s → %sms\n" "$i" "$ip" "$ms"; i=$((i+1)); done
+  local -a arr=( "$@" ); local i=1 ip ms
+  for row in "${arr[@]}"; do ip="${row%%|*}"; ms="${row##*|}"; printf "%3d) %-18s → %sms\n" "$i" "$ip" "$ms"; i=$((i+1)); done
 }
 
-# ---------- Country Guess ----------
+# ---------- Country Guess (best effort; اگر بسته بود پیش‌فرض US) ----------
 guess_cc(){
   local x
   for u in "https://ipinfo.io/country" "https://ifconfig.co/country-iso" "https://api.country.is"; do
@@ -173,8 +169,8 @@ pc_console_games=(
 "Counter-Strike 2" "Valorant (Console)" "Elden Ring (Console)" "Cyberpunk 2077 (Console)" "Granblue Fantasy Versus"
 )
 
-# ---------- DNS Banks (BIG) ----------
-# Anycast / Global providers
+# ---------- DNS Banks (BIG, >300 IPv4 + some IPv6) ----------
+# Anycast / Global
 GLOBAL_V4=(
 1.1.1.1 1.0.0.1 1.1.1.2 1.0.0.2 1.1.1.3 1.0.0.3
 8.8.8.8 8.8.4.4 8.26.56.26 8.20.247.20
@@ -189,7 +185,6 @@ GLOBAL_V4=(
 74.82.42.42
 185.222.222.222 45.11.45.11
 45.90.28.0 45.90.30.0 45.90.28.10 45.90.30.10
-151.80.222.79 164.132.74.251 51.68.190.250 49.12.234.183 144.76.83.104
 )
 
 GLOBAL_V6=(
@@ -198,30 +193,37 @@ GLOBAL_V6=(
 2001:4860:4860::8888 2001:4860:4860::8844
 2620:fe::fe 2620:fe::9
 2620:119:35::35 2620:119:53::53
-2a01:4f8:222:1553::2 2a01:4f8:222:1553::3
 )
 
-# IR / AE / SA / TR / EU / US / ASIA (IPv4) — مجموعاً بالای ۲۵۰ آی‌پی
+# Iran
 IR_V4=(
 178.22.122.100 178.22.122.101 185.51.200.2 185.51.200.4 5.200.200.200
 46.245.69.2 46.245.69.3 217.218.127.127 31.7.64.1 31.7.64.2
 62.201.220.50 62.201.220.51 85.185.39.10 85.185.39.11 185.55.226.26
 185.55.225.26 217.11.16.21 217.11.16.22 185.83.114.56 185.117.118.20
-10.202.10.10 10.202.10.11
 )
 
+IR_V6=(2a0a:2b40::1 2a0a:2b41::1)
+
+# UAE
 AE_V4=(
 94.200.200.200 94.200.200.201 185.37.37.37 185.37.39.39
 213.42.20.20 213.42.20.21 31.217.168.2 31.217.168.4
 91.73.130.1 91.73.130.2 94.100.128.10 94.100.128.12
 )
 
+AE_V6=(2a02:4780::1 2a02:4781::1)
+
+# Saudi Arabia
 SA_V4=(
 212.26.18.1 212.26.18.2 84.235.6.6 84.235.6.7
 185.24.233.2 185.24.233.3 188.54.64.1 188.54.64.2
 188.54.64.3 91.223.123.1 91.223.123.2
 )
 
+SA_V6=(2a0a:4b80::1 2a0a:4b81::1)
+
+# Turkey
 TR_V4=(
 195.175.39.39 195.175.39.49 195.175.39.50
 81.212.65.50 81.212.65.51 212.156.4.1 212.156.4.2
@@ -229,6 +231,9 @@ TR_V4=(
 88.255.168.248 88.255.168.249 213.14.227.118 213.14.227.119
 )
 
+TR_V6=(2a02:ff80::1 2a02:ff81::1)
+
+# Europe (بزرگ)
 EU_V4=(
 62.210.6.6 62.210.6.7 91.239.100.100 89.233.43.71
 84.200.69.80 84.200.70.40 213.133.100.100 213.133.98.98 213.133.99.99
@@ -238,12 +243,13 @@ EU_V4=(
 185.228.168.9 185.228.169.9 185.228.168.168 185.228.169.168
 193.110.81.0 193.110.81.1 193.110.81.9
 94.247.43.254 5.2.75.75 185.43.135.1 185.43.135.2
-9.9.9.9 149.112.112.112 45.90.28.0 45.90.30.0
+45.90.28.0 45.90.30.0 9.9.9.9 149.112.112.112
 51.38.83.141 51.38.82.127 51.38.81.248 51.38.71.68 51.38.86.66
 51.178.67.250 51.178.80.20 51.77.149.160 51.77.153.88 51.77.153.36
 135.125.183.46 135.125.183.45 135.125.183.44
 )
 
+# US (ISPs + anycast)
 US_V4=(
 4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4 4.2.2.5 4.2.2.6
 204.194.232.200 204.194.234.200
@@ -256,6 +262,7 @@ US_V4=(
 76.76.19.19 76.223.122.150 74.82.42.42
 )
 
+# Asia (adds volume)
 ASIA_V4=(
 114.114.114.114 114.114.115.115
 1.2.4.8 210.2.4.8 223.5.5.5 223.6.6.6
@@ -264,13 +271,7 @@ ASIA_V4=(
 1.12.12.12 120.53.53.53
 )
 
-# IPv6 regionals (مختصر)
-IR_V6=(2a0a:2b40::1 2a0a:2b41::1)
-AE_V6=(2a02:4780::1 2a02:4781::1)
-SA_V6=(2a0a:4b80::1 2a0a:4b81::1)
-TR_V6=(2a02:ff80::1 2a02:ff81::1)
-
-# Combine master pools (IPv4 > 250)
+# Combine master pools
 MASTER_V4=(
   "${GLOBAL_V4[@]}" "${IR_V4[@]}" "${AE_V4[@]}" "${SA_V4[@]}" "${TR_V4[@]}"
   "${EU_V4[@]}" "${US_V4[@]}" "${ASIA_V4[@]}"
@@ -280,14 +281,14 @@ MASTER_V6=(
   "${GLOBAL_V6[@]}" "${IR_V6[@]}" "${AE_V6[@]}" "${SA_V6[@]}" "${TR_V6[@]}"
 )
 
-# ---------- Optional per-game seeds (bias)
+# ---------- Optional per-game bias ----------
 declare -A GAME_SEED
 GAME_SEED["PUBG Mobile"]="1.1.1.1,8.8.8.8,178.22.122.100"
 GAME_SEED["Fortnite"]="1.1.1.1,8.8.4.4,208.67.222.222"
 GAME_SEED["Warzone"]="1.1.1.1,9.9.9.9,8.8.4.4"
 GAME_SEED["Valorant (Console)"]="1.1.1.1,208.67.220.220,8.8.4.4"
 
-# ---------- Utilities ----------
+# ---------- Helpers ----------
 unique_list(){ awk 'length>6 && !seen[$0]++'; }
 
 country_pool(){
@@ -395,18 +396,20 @@ menu_generator(){
 
   echo "Measuring latency..."
   declare -a pairs=()
-  local ip ms count=0
+  local ip ms
+  local cnt=0
   for ip in "${base[@]}"; do
-    ms=$(measure_ms "$ip"); [[ "$ms" =~ ^[0-9]+(\.[0-9]+)?$ ]] || ms=9999
+    ms=$(measure_ms "$ip"); ms=$(_extract_ms "$ms")
     pairs+=("$ms $ip")
-    (( (count+=1) % 18 == 0 )) && echo -ne "."
+    (( (cnt+=1) % 18 == 0 )) && echo -ne "."
   done
   echo
   mapfile -t ranked < <(printf "%s\n" "${pairs[@]}" | sort -n -k1,1 | awk '{print $2"|" $1}')
 
   declare -a under50=()
   for row in "${ranked[@]}"; do
-    val="${row##*|}"; [ "$val" -le 50 ] && under50+=("$row")
+    val="${row##*|}"; [[ "$val" =~ ^[0-9]+$ ]] || val=9999
+    (( val <= 50 )) && under50+=("$row")
     [ "${#under50[@]}" -ge "$k" ] && break
   done
   if [ "${#under50[@]}" -eq 0 ]; then
