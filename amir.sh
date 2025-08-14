@@ -1,54 +1,55 @@
 #!/bin/bash
 # =======================================
-# Game DNS Manager - Version 1.2.6
+# Game DNS Manager - Version 1.2.7
 # Telegram: @Academi_vpn
 # Admin By: @MahdiAGM0
 # =======================================
 
-# ----------------------------
-# Colors & Footer (kept, faster)
-colors=(31 32 33 34 35 36)
+# -------- UI Colors --------
+colors=("\e[1;31m" "\e[1;32m" "\e[1;33m" "\e[1;34m" "\e[1;35m" "\e[1;36m")
+reset="\e[0m"
 color_index=0
+
+# -------- Footer (kept, cycling colors) --------
 print_footer() {
-  local color=${colors[$color_index]}
+  local c=${colors[$color_index]}
   color_index=$(( (color_index + 1) % ${#colors[@]} ))
-  echo -e "\e[${color}m"
+  echo -e "${c}"
   echo "========================================"
-  echo " Version: 1.2.6"
+  echo " Version: 1.2.7"
   echo " Telegram: @Academi_vpn"
   echo " Admin By: @MahdiAGM0"
   echo "========================================"
-  echo -e "\e[0m"
+  echo -e "${reset}"
 }
 
-# ----------------------------
-# Fast title animation
+# -------- Super-fast Title animation + random color each time --------
 type_text() {
-  local text="$1" delay="${2:-0.00016}"
+  local text="$1" delay="${2:-0.00008}" # much faster
   for ((i=0;i<${#text};i++)); do echo -ne "${text:$i:1}"; sleep $delay; done
   echo
 }
 show_title() {
   clear
-  echo
-  type_text "╔════════════════════════════════════════════╗" 0.00014
-  type_text "║            GAME DNS MANAGEMENT             ║" 0.00014
-  type_text "╠════════════════════════════════════════════╣" 0.00014
-  type_text "║ Version: 1.2.6                             ║" 0.00014
-  type_text "║ Telegram: @Academi_vpn                     ║" 0.00014
-  type_text "║ Admin:    @MahdiAGM0                       ║" 0.00014
-  type_text "╚════════════════════════════════════════════╝" 0.00014
-  echo
+  local c=${colors[$RANDOM % ${#colors[@]}]}
+  echo -e "${c}"
+  type_text "╔════════════════════════════════════════════╗" 0.00006
+  type_text "║            GAME DNS MANAGEMENT             ║" 0.00006
+  type_text "╠════════════════════════════════════════════╣" 0.00006
+  type_text "║ Version: 1.2.7                             ║" 0.00006
+  type_text "║ Telegram: @Academi_vpn                     ║" 0.00006
+  type_text "║ Admin:    @MahdiAGM0                       ║" 0.00006
+  type_text "╚════════════════════════════════════════════╝" 0.00006
+  echo -e "${reset}"
 }
 
 press_enter(){ echo -e "\nPress Enter to return..."; read -r; }
 trim(){ echo "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+slugify(){ echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g;s/-\+/-/g;s/^-//;s/-$//'; }
 
-# ----------------------------
-# Dependencies (auto-install if missing)
+# -------- Dependencies (auto-install) --------
 need_cmds=(curl awk sed grep dig)
-missing=()
-for c in "${need_cmds[@]}"; do command -v "$c" >/dev/null 2>&1 || missing+=("$c"); done
+missing=(); for c in "${need_cmds[@]}"; do command -v "$c" >/dev/null 2>&1 || missing+=("$c"); done
 if [ "${#missing[@]}" -gt 0 ]; then
   echo "Installing missing dependencies: ${missing[*]} (requires sudo/root)"
   if command -v apt >/dev/null 2>&1; then
@@ -58,11 +59,11 @@ if [ "${#missing[@]}" -gt 0 ]; then
   elif command -v apk >/dev/null 2>&1; then
     sudo apk add --no-cache curl bind-tools
   else
-    echo "Please install: curl, dnsutils/bind-tools"; fi
+    echo "Please install: curl, dnsutils/bind-tools"
+  fi
 fi
 
-# ----------------------------
-# DATA — 50 Mobile Games
+# -------- Data: 50 Mobile Games --------
 mobile_games=(
 "PUBG Mobile" "Call of Duty Mobile" "Garena Free Fire" "Arena Breakout" "Clash of Clans"
 "Mobile Legends" "Brawl Stars" "Among Us" "Genshin Impact" "Pokemon Go"
@@ -76,30 +77,29 @@ mobile_games=(
 "Plants vs Zombies 2" "Boom Beach" "Archero" "Torchlight: Infinite" "Hearthstone Mobile"
 )
 
-# DATA — 50 PC/Console Games (DNS Console)
+# -------- Data: 50 PC/Console Games (DNS Console) --------
 console_games=(
-"Fortnite (Console)" "Warzone (Console)" "EA FC 24 (Console)" "Rocket League (Console)" "Apex Legends (Console)"
-"Minecraft (Console)" "GTA V Online (Console)" "Red Dead Online (Console)" "Battlefield 2042 (Console)" "Destiny 2 (Console)"
-"Overwatch 2 (Console)" "NBA 2K24" "NHL 24" "Forza Horizon 5" "Gran Turismo 7"
-"Need for Speed Heat" "Rainbow Six Siege (Console)" "Call of Duty MWII" "Call of Duty Cold War" "The Division 2"
-"Sea of Thieves (Console)" "Fall Guys (Console)" "Halo Infinite" "Paladins (Console)" "Diablo IV (Console)"
-"SMITE (Console)" "ARK: Survival Ascended (Console)" "Roblox (Console)" "Genshin Impact (Console)" "World of Tanks (Console)"
-"World of Warships (Console)" "eFootball 2024 (Console)" "Madden NFL 24" "MLB The Show 24" "WWE 2K24"
+"Fortnite" "Warzone" "EA FC 24" "Rocket League" "Apex Legends"
+"Minecraft" "GTA V Online" "Red Dead Online" "Battlefield 2042" "Destiny 2"
+"Overwatch 2" "NBA 2K24" "NHL 24" "Forza Horizon 5" "Gran Turismo 7"
+"Need for Speed Heat" "Rainbow Six Siege" "Call of Duty MWII" "Call of Duty Cold War" "The Division 2"
+"Sea of Thieves" "Fall Guys" "Halo Infinite" "Paladins" "Diablo IV"
+"SMITE" "ARK: Survival Ascended" "Roblox (Console)" "Genshin Impact (Console)" "World of Tanks"
+"World of Warships" "eFootball 2024" "Madden NFL 24" "MLB The Show 24" "WWE 2K24"
 "The Crew Motorfest" "Mortal Kombat 1" "Street Fighter 6" "Tekken 8" "For Honor"
-"Hunt: Showdown (Console)" "THE FINALS (Console)" "Helldivers 2" "Tower of Fantasy (Console)" "Tom Clancy's XDefiant"
-"Counter-Strike 2 (Console/Steam Deck)" "Valorant (Console)" "Elden Ring (Console)" "Cyberpunk 2077 (Console)" "Granblue Fantasy Versus"
+"Hunt: Showdown" "THE FINALS" "Helldivers 2" "Tower of Fantasy (Console)" "XDefiant"
+"Counter-Strike 2" "Valorant (Console)" "Elden Ring (Console)" "Cyberpunk 2077 (Console)" "Granblue Fantasy Versus"
 )
 
-# Optional per-game preferred DNS (used first if exists)
+# -------- Preferred per-game DNS (used first if exists; then auto-augment to 200+) --------
 declare -A game_dns_pref=(
-  ["Fortnite (Console)"]="1.1.1.1,8.8.8.8,9.9.9.9"
-  ["Warzone (Console)"]="1.1.1.1,8.8.4.4,208.67.222.222"
+  ["PUBG Mobile"]="1.1.1.1,8.8.8.8,9.9.9.9"
+  ["Fortnite"]="1.1.1.1,8.8.4.4,208.67.222.222"
+  ["Warzone"]="1.1.1.1,8.8.4.4,9.9.9.9"
   ["Valorant (Console)"]="1.1.1.1,8.8.4.4,9.9.9.9"
-  ["PUBG Mobile"]="1.1.1.1,8.8.8.8,208.67.220.220"
 )
 
-# ----------------------------
-# Built-in DNS seeds (100+ IPv4, several IPv6) — reputable anycast + regional
+# -------- Seed resolvers (reputable, low-latency anycast + regional) --------
 dns_ipv4_seed=(
 1.1.1.1 1.0.0.1 1.1.1.2 1.0.0.2 1.1.1.3 1.0.0.3
 8.8.8.8 8.8.4.4
@@ -123,8 +123,8 @@ dns_ipv4_seed=(
 129.250.35.250 129.250.35.251
 168.95.1.1 168.95.192.1
 178.22.122.100 178.22.122.101 185.51.200.2 185.51.200.4
-1.232.188.2 1.232.188.6 23.253.163.53 45.90.28.0 45.90.30.0
-208.67.222.2 208.67.220.2 94.247.43.254 62.212.67.196 62.201.220.50 62.201.220.51 62.201.220.52 62.201.220.53 62.201.220.54 62.201.220.55 62.201.220.56 62.201.220.57
+62.201.220.50 62.201.220.51 62.201.220.52 62.201.220.53 62.201.220.54 62.201.220.55 62.201.220.56 62.201.220.57
+23.253.163.53 45.90.28.0 45.90.30.0 80.67.169.12 80.67.169.40 64.233.217.2 64.233.219.2 64.233.223.2 64.233.171.2
 )
 
 dns_ipv6_seed=(
@@ -137,48 +137,12 @@ dns_ipv6_seed=(
 2a01:4f8:222:1553::2 2a01:4f8:222:1553::3
 )
 
-# ----------------------------
-# DNS Download (100 curated resolvers) — will be offered for save
-dns_download=(
-1.1.1.1 1.0.0.1 1.1.1.2 1.0.0.2 1.1.1.3 1.0.0.3
-8.8.8.8 8.8.4.4
-9.9.9.9 149.112.112.112 9.9.9.10 149.112.112.10 9.9.9.11 149.112.112.11
-208.67.222.222 208.67.220.220 208.67.222.123 208.67.220.123
-94.140.14.14 94.140.15.15 94.140.14.15 94.140.15.16
-185.228.168.9 185.228.169.9 185.228.168.10 185.228.169.11 185.228.168.168
-84.200.69.80 84.200.70.40
-77.88.8.8 77.88.8.1 77.88.8.2 77.88.8.88
-64.6.64.6 64.6.65.6
-156.154.70.1 156.154.71.1 156.154.70.2 156.154.71.2 156.154.70.3 156.154.71.3 156.154.70.4 156.154.71.4 156.154.70.5 156.154.71.5 156.154.70.10 156.154.71.10
-76.76.19.19 76.223.122.150
-91.239.100.100 89.233.43.71
-74.82.42.42
-80.80.80.80 80.80.81.81
-195.46.39.39 195.46.39.40
-8.26.56.26 8.20.247.20
-185.222.222.222 45.11.45.11
-101.101.101.101 101.102.103.104
-4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4 4.2.2.5 4.2.2.6
-129.250.35.250 129.250.35.251
-168.95.1.1 168.95.192.1
-178.22.122.100 178.22.122.101 185.51.200.2 185.51.200.4
-62.201.220.50 62.201.220.51 62.201.220.52 62.201.220.53 62.201.220.54 62.201.220.55 62.201.220.56 62.201.220.57
-64.233.217.2 64.233.219.2 64.233.223.2 64.233.171.2
-1.232.188.2 1.232.188.6
-23.253.163.53 74.82.42.42 208.67.222.2 208.67.220.2
-45.90.28.0 45.90.30.0 94.247.43.254 80.67.169.12 80.67.169.40
-176.103.130.130 176.103.130.131
-1.1.1.1 9.9.9.11 9.9.9.12 49.156.20.6 1.0.0.1
-)
+# -------- Caches --------
+CACHE_DIR="/tmp/dns_gamer_cache"; mkdir -p "$CACHE_DIR"
+DNS_CACHE_V4="$CACHE_DIR/resolvers_v4.csv"
+DNS_CACHE_V6="$CACHE_DIR/resolvers_v6.csv"
 
-# ----------------------------
-# Live DNS cache (from public-dns.info)
-DNS_CACHE_DIR="/tmp/dns_cache"; mkdir -p "$DNS_CACHE_DIR"
-DNS_CACHE_V4="$DNS_CACHE_DIR/resolvers_v4.txt"
-DNS_CACHE_V6="$DNS_CACHE_DIR/resolvers_v6.txt"
-
-# ----------------------------
-# Net helpers
+# -------- Helpers --------
 get_country_cc() {
   for u in "https://ipinfo.io/country" "https://ifconfig.co/country-iso" "https://api.country.is"; do
     cc=$(curl -fsSL --max-time 3 "$u" 2>/dev/null | tr -d '\n\r[:space:]' | sed 's/[^A-Za-z]//g' | head -c 2)
@@ -187,67 +151,84 @@ get_country_cc() {
   echo "US"
 }
 dig_latency_ms() {
-  local server="$1"
-  local out qtime
-  out=$(dig +tries=1 +time=1 +stats @"$server" google.com A 2>/dev/null)
+  local s="$1" out qtime
+  out=$(dig +tries=1 +time=1 +stats @"$s" google.com A 2>/dev/null)
   qtime=$(echo "$out" | awk '/Query time:/ {print $4}')
-  [ -z "$qtime" ] && echo "Timeout" || echo "$qtime"
+  [ -z "$qtime" ] && echo 9999 || echo "$qtime"
 }
 
-# Fetch live resolvers (filter by reliability & RTT; optional country ISO)
+# Fetch live good resolvers from public-dns.info (kept local CSV: ip,latency)
 fetch_public_dns() {
-  local limit="${1:-200}" version="${2:-4}" country_filter="${3:-}"
+  local version="${1:-4}" limit="${2:-800}" cc_filter="${3:-}"
   local url="https://public-dns.info/nameservers.csv"
-  local tmpfile; tmpfile="$(mktemp)"
-  if ! curl -fsSL --max-time 15 "$url" -o "$tmpfile"; then
-    echo "Could not fetch live DNS list; using seeds only."
+  local tmp; tmp="$(mktemp)"
+  if ! curl -fsSL --max-time 15 "$url" -o "$tmp"; then
+    echo "Warning: live resolver list unavailable (using seeds only)."
     return 1
   fi
   if [ "$version" = "4" ]; then
-    awk -F',' -v cc="$country_filter" 'NR>1 && $1 !~ /:/ && $2+0>=0.98 && $6+0>0 && $6+0<=100 { if(cc=="" || $4==cc) print $1","$6 }' "$tmpfile" \
-      | sort -t, -k2,2n | cut -d, -f1 | head -n "$limit" > "$DNS_CACHE_V4"
+    # IPv4 rows: reliability>=0.98, rtt 1..120ms (keep ip and rtt)
+    awk -F',' -v cc="$cc_filter" 'NR>1 && $1 !~ /:/ && $2+0>=0.98 && $6+0>0 && $6+0<=120 { if(cc=="" || $4==cc) print $1","$6 }' "$tmp" \
+      | sort -t, -k2,2n | head -n "$limit" > "$DNS_CACHE_V4"
   else
-    awk -F',' -v cc="$country_filter" 'NR>1 && $1 ~ /:/ && $2+0>=0.98 && $6+0>0 && $6+0<=120 { if(cc=="" || $4==cc) print $1","$6 }' "$tmpfile" \
-      | sort -t, -k2,2n | cut -d, -f1 | head -n "$limit" > "$DNS_CACHE_V6"
+    awk -F',' -v cc="$cc_filter" 'NR>1 && $1 ~ /:/ && $2+0>=0.98 && $6+0>0 && $6+0<=160 { if(cc=="" || $4==cc) print $1","$6 }' "$tmp" \
+      | sort -t, -k2,2n | head -n "$limit" > "$DNS_CACHE_V6"
   fi
-  rm -f "$tmpfile"
+  rm -f "$tmp"
 }
 
-# Merge seeds + live, test latency, return top N
-get_best_dns() {
-  local version="${1:-4}" count="${2:-5}"
-  local -a list=()
-  if [ "$version" = "4" ]; then
-    list+=("${dns_ipv4_seed[@]}"); [ -s "$DNS_CACHE_V4" ] && mapfile -t add < "$DNS_CACHE_V4" && list+=("${add[@]}")
-  else
-    list+=("${dns_ipv6_seed[@]}"); [ -s "$DNS_CACHE_V6" ] && mapfile -t add < "$DNS_CACHE_V6" && list+=("${add[@]}")
+# Build 200+ list for a game (merge: preferred + seeds + live filtered + measured)
+build_dns_list_for_game() {
+  local game="$1" ipver="${2:-4}" need="${3:-200}"
+  local game_slug; game_slug="$(slugify "$game")"
+  local cache_file="$CACHE_DIR/game_${game_slug}_v${ipver}.txt"
+  if [ -s "$cache_file" ]; then
+    cat "$cache_file"
+    return 0
   fi
-  mapfile -t list < <(printf "%s\n" "${list[@]}" | awk '!seen[$0]++')  # de-dup
-  declare -a results=()
-  for s in "${list[@]}"; do
-    ms=$(dig_latency_ms "$s"); [[ "$ms" =~ ^[0-9]+$ ]] && results+=("$ms $s")
-  done
-  printf "%s\n" "${results[@]}" | sort -n | head -n "$count" | awk '{print $2}'
-}
 
-# ----------------------------
-# Game → DNS recommendation
-recommend_dns_for_game() {
-  local game="$1" console="$2" ipver="${3:-4}" count="${4:-5}"
-  local key="$game"; [ -n "$console" ] && key="$game ($console)"
-  local pref="${game_dns_pref[$key]}"; [ -z "$pref" ] && pref="${game_dns_pref[$game]}"
   local cc="$(get_country_cc)"
-  if [ -z "$pref" ]; then
-    fetch_public_dns 200 "$ipver" "$cc" >/dev/null 2>&1
-    get_best_dns "$ipver" "$count"
-  else
-    IFS=',' read -r -a p <<< "$pref"; for i in "${p[@]}"; do echo "$i"; done
-    local remain=$((count - ${#p[@]})); [ "$remain" -gt 0 ] && get_best_dns "$ipver" "$remain"
+  fetch_public_dns "$ipver" 1200 "$cc" >/dev/null 2>&1
+
+  # gather pool
+  declare -a pool=()
+  local pref="${game_dns_pref[$game]}"
+  if [ -n "$pref" ]; then IFS=',' read -r -a arr <<< "$pref"; pool+=("${arr[@]}"); fi
+  if [ "$ipver" = "4" ]; then pool+=("${dns_ipv4_seed[@]}"); [ -s "$DNS_CACHE_V4" ] && mapfile -t add < <(cut -d, -f1 "$DNS_CACHE_V4") && pool+=("${add[@]}"); else pool+=("${dns_ipv6_seed[@]}"); [ -s "$DNS_CACHE_V6" ] && mapfile -t add < <(cut -d, -f1 "$DNS_CACHE_V6") && pool+=("${add[@]}"); fi
+
+  # de-duplicate
+  mapfile -t pool < <(printf "%s\n" "${pool[@]}" | awk 'length>6 && !seen[$0]++')
+
+  # measure a capped amount to keep runtime reasonable
+  local cap=400
+  [ "${#pool[@]}" -lt "$cap" ] && cap="${#pool[@]}"
+  declare -a results=()
+  for ((i=0;i<cap;i++)); do
+    s="${pool[$i]}"; ms=$(dig_latency_ms "$s")
+    [[ "$ms" =~ ^[0-9]+$ ]] && [ "$ms" -lt 1200 ] && results+=("$ms $s")
+  done
+
+  # add some unmeasured fast candidates from live CSV (already sorted by RTT)
+  if [ "${#results[@]}" -lt "$need" ]; then
+    if [ "$ipver" = "4" ] && [ -s "$DNS_CACHE_V4" ]; then
+      mapfile -t fastcsv < <(cut -d, -f1 "$DNS_CACHE_V4" | head -n $((need*2)))
+      for s in "${fastcsv[@]}"; do results+=("300 $s"); done
+    elif [ -s "$DNS_CACHE_V6" ]; then
+      mapfile -t fastcsv < <(cut -d, -f1 "$DNS_CACHE_V6" | head -n $((need*2)))
+      for s in "${fastcsv[@]}"; do results+=("300 $s"); done
+    fi
   fi
+
+  # rank & pick top "need"
+  mapfile -t top < <(printf "%s\n" "${results[@]}" | sort -n -k1,1 | awk '{print $2}' | awk '!seen[$0]++' | head -n "$need")
+  : > "$cache_file"
+  local idx=1
+  for ip in "${top[@]}"; do printf "%s\n" "$ip" | tee -a "$cache_file" >/dev/null; idx=$((idx+1)); done
+
+  cat "$cache_file"
 }
 
-# ----------------------------
-# DNS Generator — real CIDRs + validation with dig
+# ---------- DNS Generator (Iran/UAE/Saudi/Turkey) ----------
 country_to_cc() {
   case "$(echo "$1" | tr '[:upper:]' '[:lower:]')" in
     iran|ir) echo "ir" ;;
@@ -272,7 +253,8 @@ rand_ipv6_in_cidr() {
   local cidr="$1" base="${cidr%/*}"; printf "%s:%x\n" "$base" "$((RANDOM & 0xFFFF))"
 }
 validate_dns_server() {
-  local ip="$1" out status
+  local ip="$1"
+  local out status
   out=$(dig +tries=1 +time=1 @"$ip" google.com A 2>/dev/null)
   status=$(echo "$out" | awk -F'[, ]+' '/status: /{print $6}')
   [ "$status" = "NOERROR" -o "$status" = "SERVFAIL" ]
@@ -280,6 +262,7 @@ validate_dns_server() {
 generate_dns_list() {
   local country="$1" ipver="$2" count="$3"
   local cc=$(country_to_cc "$country"); [ -z "$cc" ] && echo "Invalid country. Use: Iran, UAE, Saudi, Turkey." && return 1
+
   local url_v4="https://www.ipdeny.com/ipblocks/data/aggregated/${cc}-aggregated.zone"
   local url_v6="https://www.ipdeny.com/ipv6/ipaddresses/aggregated/${cc}-aggregated.zone"
   local tmp="$(mktemp)"
@@ -304,126 +287,135 @@ generate_dns_list() {
       fi
     fi
   done
+
   echo
-  if [ "$found" -lt "$count" ]; then echo "Found ${found}/${count}. (CIDRs limited or firewalled)"; fi
-  local idx=1; for ip in "${result[@]}"; do printf "%2d) %s\n" "$idx" "$ip"; idx=$((idx+1)); done
+  local idx=1
+  for ip in "${result[@]}"; do printf "%2d) %s\n" "$idx" "$ip"; idx=$((idx+1)); done
+
+  # Offer save
+  read -rp "Save to file? (y/N): " sv
+  if [[ "$sv" =~ ^[Yy]$ ]]; then
+    local f="dns_generated_${cc}_ipv${ipver}.txt"
+    : > "$f"; for ip in "${result[@]}"; do echo "$ip" >> "$f"; done
+    echo "Saved ${#result[@]} entries to ./$f"
+  fi
 }
 
-# ----------------------------
-# Menus
+# -------- UI Sections --------
 list_mobile_games() {
   show_title
-  echo "Mobile Games (50):"
+  echo "Mobile Games:"
   local i=1; for g in "${mobile_games[@]}"; do printf "%2d) %s\n" "$i" "$g"; i=$((i+1)); done
-  print_footer; press_enter
-}
-list_console_games() {
-  show_title
-  echo "DNS Console — PC/Console Games (50):"
-  local i=1; for g in "${console_games[@]}"; do printf "%2d) %s\n" "$i" "$g"; i=$((i+1)); done
-  echo; echo "Tip: Use 'Search & Recommend DNS' to get per-game suggestions."
-  print_footer; press_enter
-}
-search_recommend_dns() {
-  show_title
-  echo -n "Game name: "; read -r game
-  echo -n "Console/Platform (PC/PS/Xbox/etc.): "; read -r console
-  echo -n "IPv4 or IPv6? (4/6): "; read -r v; v=$(trim "$v"); [ "$v" = "6" ] && ipver="6" || ipver="4"
-  echo -n "How many DNS addresses? [5]: "; read -r c; c=${c:-5}
-  echo "Preparing recommendations..."
-  mapfile -t dnslist < <(recommend_dns_for_game "$game" "$console" "$ipver" "$c")
-  if [ "${#dnslist[@]}" -eq 0 ]; then
-    echo "Nothing found. Try 'Update Live DNS' first."
-  else
-    echo; echo "Suggested DNS for \"$game\" ($console) [IPv$ipver]:"
-    local i=1; for d in "${dnslist[@]}"; do printf "%2d) %s\n" "$i" "$d"; i=$((i+1)); done
+  echo
+  read -rp "Pick game number to get DNS (or Enter to go back): " num
+  if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#mobile_games[@]}" ]; then
+    local game="${mobile_games[$((num-1))]}"
+    echo -n "IPv4 or IPv6? (4/6) [4]: "; read -r v; v="${v:-4}"
+    echo -n "How many DNS you want? [200]: "; read -r n; n="${n:-200}"
+    mapfile -t lst < <(build_dns_list_for_game "$game" "$v" "$n")
+    echo; echo "DNS for $game [IPv$v]:"
+    local i=1; for ip in "${lst[@]}"; do printf "%3d) %s\n" "$i" "$ip"; i=$((i+1)); done
+    echo
+    read -rp "Save to file? (y/N): " sv
+    if [[ "$sv" =~ ^[Yy]$ ]]; then
+      local file="dns_$(slugify "$game")_ipv${v}.txt"; : > "$file"
+      for ip in "${lst[@]}"; do echo "$ip" >> "$file"; done
+      echo "Saved ${#lst[@]} entries to ./$file"
+    fi
   fi
   print_footer; press_enter
 }
-dns_generator_menu() {
+
+list_console_games() {
   show_title
-  echo "DNS Generator (Real CIDRs) — Countries: Iran, UAE, Saudi, Turkey"
-  echo -n "Country: "; read -r country
-  echo -n "IPv4 or IPv6? (4/6): "; read -r v; v=$(trim "$v"); [ "$v" = "6" ] && ipver="6" || ipver="4"
-  echo -n "How many DNS addresses? [5]: "; read -r cnt; cnt=${cnt:-5}
-  generate_dns_list "$country" "$ipver" "$cnt"
-  print_footer; press_enter
-}
-update_live_dns_menu() {
-  show_title
-  local cc="$(get_country_cc)"
-  echo "Detected country (ISO): $cc"
-  echo -n "How many IPv4 to cache? [200]: "; read -r n4; n4=${n4:-200}
-  echo -n "How many IPv6 to cache? [100]: "; read -r n6; n6=${n6:-100}
-  fetch_public_dns "$n4" "4" "$cc"
-  fetch_public_dns "$n6" "6" "$cc"
-  echo "Live DNS lists updated."
-  print_footer; press_enter
-}
-quick_best_dns_menu() {
-  show_title
-  echo "Top 5 low-latency DNS (auto) [IPv4]:"
-  fetch_public_dns 200 4 "$(get_country_cc)" >/dev/null 2>&1
-  mapfile -t best4 < <(get_best_dns 4 5)
-  local i=1; for d in "${best4[@]}"; do printf "%2d) %s\n" "$i" "$d"; i=$((i+1)); done
-  echo; echo "Top 5 low-latency DNS (auto) [IPv6]:"
-  fetch_public_dns 100 6 "$(get_country_cc)" >/dev/null 2>&1
-  mapfile -t best6 < <(get_best_dns 6 5)
-  i=1; for d in "${best6[@]}"; do printf "%2d) %s\n" "$i" "$d"; i=$((i+1)); done
-  print_footer; press_enter
-}
-dns_download_menu() {
-  show_title
-  echo "DNS Download (100 curated resolvers)"
-  echo "1) Show list"
-  echo "2) Save to file (dns_download.txt)"
-  echo "0) Back"
-  echo -n "Select: "; read -r o
-  case "$o" in
-    1)
-      local i=1; for d in "${dns_download[@]}"; do printf "%3d) %s\n" "$i" "$d"; i=$((i+1)); done
-      ;;
-    2)
-      local f="dns_download.txt"
-      : > "$f"
-      local i=1; for d in "${dns_download[@]}"; do printf "%s\n" "$d" >> "$f"; i=$((i+1)); done
-      echo "Saved $(wc -l < "$f") entries to ./$f"
-      ;;
-    0) ;;
-    *) echo "Invalid option." ;;
-  esac
+  echo "PC/Console Games:"
+  local i=1; for g in "${console_games[@]}"; do printf "%2d) %s\n" "$i" "$g"; i=$((i+1)); done
+  echo
+  read -rp "Pick game number to get DNS (or Enter to go back): " num
+  if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#console_games[@]}" ]; then
+    local game="${console_games[$((num-1))]}"
+    echo -n "IPv4 or IPv6? (4/6) [4]: "; read -r v; v="${v:-4}"
+    echo -n "How many DNS you want? [200]: "; read -r n; n="${n:-200}"
+    mapfile -t lst < <(build_dns_list_for_game "$game" "$v" "$n")
+    echo; echo "DNS for $game [IPv$v]:"
+    local i=1; for ip in "${lst[@]}"; do printf "%3d) %s\n" "$i" "$ip"; i=$((i+1)); done
+    echo
+    read -rp "Save to file? (y/N): " sv
+    if [[ "$sv" =~ ^[Yy]$ ]]; then
+      local file="dns_$(slugify "$game")_ipv${v}.txt"; : > "$file"
+      for ip in "${lst[@]}"; do echo "$ip" >> "$file"; done
+      echo "Saved ${#lst[@]} entries to ./$file"
+    fi
+  fi
   print_footer; press_enter
 }
 
+search_game_dns() {
+  show_title
+  echo "Search DNS by Game + Device"
+  read -rp "Game name: " game
+  read -rp "Device/Platform (Mobile/PC/Console/etc.): " dev
+  read -rp "IPv4 or IPv6? (4/6) [4]: " v; v="${v:-4}"
+  read -rp "How many DNS? [200]: " n; n="${n:-200}"
+  local label="$game"
+  [ -n "$dev" ] && label="$game ($dev)"
+  mapfile -t lst < <(build_dns_list_for_game "$label" "$v" "$n")
+  echo; echo "DNS for $label [IPv$v]:"
+  local i=1; for ip in "${lst[@]}"; do printf "%3d) %s\n" "$i" "$ip"; i=$((i+1)); done
+  echo
+  read -rp "Save to file? (y/N): " sv
+  if [[ "$sv" =~ ^[Yy]$ ]]; then
+    local file="dns_$(slugify "$label")_ipv${v}.txt"; : > "$file"
+    for ip in "${lst[@]}"; do echo "$ip" >> "$file"; done
+    echo "Saved ${#lst[@]} entries to ./$file"
+  fi
+  print_footer; press_enter
+}
+
+dns_generator_menu() {
+  show_title
+  echo "DNS Generator"
+  echo "Choose Country:"
+  echo "  1) Iran"
+  echo "  2) UAE"
+  echo "  3) Saudi Arabia"
+  echo "  4) Turkey"
+  read -rp "Select (1-4): " c
+  case "$c" in
+    1) cn="Iran";;
+    2) cn="UAE";;
+    3) cn="Saudi";;
+    4) cn="Turkey";;
+    *) echo "Invalid."; print_footer; press_enter; return;;
+  esac
+  read -rp "IPv4 or IPv6? (4/6) [4]: " v; v="${v:-4}"
+  read -rp "How many DNS to generate? [50]: " n; n="${n:-50}"
+  generate_dns_list "$cn" "$v" "$n"
+  print_footer; press_enter
+}
+
+# -------- Main Menu (only 4 options as requested) --------
 main_menu() {
   while true; do
     show_title
-    cat <<EOF
-Main Menu:
-  1) Mobile Games (50)
-  2) DNS Console (PC/Console 50)
-  3) Search & Recommend DNS (by Game + Console)
-  4) DNS Generator (Iran/UAE/Saudi/Turkey | IPv4/IPv6)
-  5) Update Live DNS (public-dns.info)
-  6) Quick Top-5 DNS (auto)
-  7) DNS Download (100 curated)
-  0) Exit
+    cat <<'EOF'
+1) Mobile Games DNS
+2) PC/Console Games DNS
+3) Search Game DNS (by name + device)
+4) DNS Generator (Iran/UAE/Saudi/Turkey)
+0) Exit
 EOF
-    echo -n "Select: "; read -r opt
+    read -rp "Select: " opt
     case "$opt" in
       1) list_mobile_games ;;
       2) list_console_games ;;
-      3) search_recommend_dns ;;
+      3) search_game_dns ;;
       4) dns_generator_menu ;;
-      5) update_live_dns_menu ;;
-      6) quick_best_dns_menu ;;
-      7) dns_download_menu ;;
       0) exit 0 ;;
       *) echo "Invalid option."; sleep 1 ;;
     esac
   done
 }
 
-# ----------------------------
-# Start
+# -------- Start --------
 main_menu
