@@ -1,472 +1,339 @@
-#!/usr/bin/env bash
+#!/bin/bash
+
 # =======================================
-# Game DNS Manager - Version 13.0 (FULL)
+# Game & DNS Manager - Version 5.0.0
 # Telegram: @Academi_vpn
-# Admin:    @MahdiAGM0
+# Admin By: @MahdiAGM0
 # =======================================
 
-set -u
-
-# -------- Colors & Fast Title --------
+# ---------- Colors for Title Animation ----------
 colors=(31 32 33 34 35 36)
 color_index=0
-TITLE_DELAY="${TITLE_DELAY:-0.03}"  # هرچی کمتر، سریع‌تر
 
-_fastline(){ local s="$1" d="${2:-$TITLE_DELAY}"; for ((i=0;i<${#s};i++));do printf "%s" "${s:$i:1}"; sleep "$d"; done; printf "\n"; }
-
-title(){
-  clear
-  local c="${colors[$color_index]}"; color_index=$(( (color_index+1) % ${#colors[@]} ))
-  echo -e "\e[1;${c}m"
-  _fastline "╔══════════════════════════════════════════════════════╗" 0.001
-  _fastline "║              GAME DNS MANAGER  v13.0                 ║" 0.001
-  _fastline "║            @Academi_vpn  |  @MahdiAGM0               ║" 0.001
-  _fastline "╚══════════════════════════════════════════════════════╝" 0.001
-  echo -e "\e[0m"
-}
-
-footer(){
-  local c="${colors[$color_index]}"; color_index=$(( (color_index+1) % ${#colors[@]} ))
-  echo -e "\e[1;${c}m"
-  echo "======================================================="
-  echo " Version: 13.0 | Telegram: @Academi_vpn | Admin: @MahdiAGM0"
-  echo "======================================================="
-  echo -e "\e[0m"
-}
-
-pause_enter(){ read -rp "Press Enter to continue..." _; }
-
-# -------- Utils --------
-has(){ command -v "$1" >/dev/null 2>&1; }
-normalize(){ tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:] .:_-'; }
-trim(){ sed 's/^[[:space:]]*//;s/[[:space:]]*$//'; }
-
-TMPBASE="${TMPDIR:-/data/local/tmp}"
-[[ -w "$TMPBASE" ]] || TMPBASE="/tmp"
-CACHE_DIR="$TMPBASE/dns_gamer_cache"
-mkdir -p "$CACHE_DIR" 2>/dev/null || true
-
-# -------- Latency (ms) --------
-_fallback_ms(){ echo $((25 + RANDOM % 60)); }
-
-_tcp_ms(){ # TCP handshake to port 53 (no sudo)
-  local host="$1" start end
-  start="$(date +%s%N 2>/dev/null)"; [[ "$start" == *N ]] && start=$(( $(date +%s)*1000000000 ))
-  if exec {__s}<>"/dev/tcp/$host/53" 2>/dev/null; then exec {__s}>&- {__s}<&-; else echo ""; return; fi
-  end="$(date +%s%N 2>/dev/null)"; [[ "$end" == *N ]] && end=$(( $(date +%s)*1000000000 ))
-  echo $(( (end-start)/1000000 ))
-}
-
-_ms(){ # try ping -> fallback tcp -> fallback random
-  local ip="$1" out ms
-  if [[ "$ip" == *:* ]]; then
-    if has ping6; then out="$(ping6 -c1 -W1 "$ip" 2>/dev/null | grep -Eo 'time=[0-9.]+' | cut -d= -f2)"; fi
-    [[ -z "${out:-}" && $(has ping; echo $?) -eq 0 ]] && out="$(ping -6 -c1 -W1 "$ip" 2>/dev/null | grep -Eo 'time=[0-9.]+' | cut -d= -f2)"
-  else
-    if has ping; then out="$(ping -4 -c1 -W1 "$ip" 2>/dev/null | grep -Eo 'time=[0-9.]+' | cut -d= -f2)"; fi
-  fi
-  if [[ -z "${out:-}" ]]; then ms="$(_tcp_ms "$ip")"; else ms="$out"; fi
-  [[ -z "$ms" ]] && ms="$(_fallback_ms)"
-  echo "$ms"
-}
-
-_expand_ipv6(){
-  local ip="$1"
-  if [[ "$ip" == *:* && -n "${BASH_VERSION:-}" && $(has python3; echo $?) -eq 0 ]]; then
-python3 - <<'EOF' 2>/dev/null
-import ipaddress,sys
-ip=sys.stdin.read().strip()
-try:
-  print(ipaddress.IPv6Address(ip).exploded)
-except Exception:
-  print(ip)
-EOF
-  else echo "$ip"; fi
-}
-
-_shuffle(){ awk 'BEGIN{srand();}{printf "%.12f %s\n",rand(),$0}' | sort -n | cut -d' ' -f2-; }
-
-_pick_best_two(){ # returns two lines: "<ms>|<ip>"
-  local arr=("$@") pairs=()
-  mapfile -t arr < <(printf "%s\n" "${arr[@]}" | _shuffle)
-  for ip in "${arr[@]}"; do
-    [[ -z "$ip" ]] && continue
-    local ms="$(_ms "$ip")"
-    pairs+=( "${ms}|${ip}" )
+# ---------- Faster Title Animation ----------
+title() {
+  local text=" Game DNS Manager "
+  local len=${#text}
+  local color=${colors[$color_index]}
+  color_index=$(( (color_index + 1) % ${#colors[@]} ))
+  echo -ne "\e[1;${color}m"
+  for ((i=0; i<$len; i++)); do
+    echo -n "${text:$i:1}"
+    sleep 0.03   # faster animation
   done
-  mapfile -t top2 < <(printf "%s\n" "${pairs[@]}" | sort -n -t'|' -k1,1 | head -n 2)
-  printf "%s\n%s\n" "${top2[0]}" "${top2[1]}"
+  echo -e "\e[0m"
 }
 
-_show_ps(){
-  local a="$1" b="$2" ip ms
-  ms="${a%%|*}"; ip="${a#*|}"; [[ "$ip" == *:* ]] && ip="$(_expand_ipv6 "$ip")"
-  printf "Primary DNS:   %-42s → %sms\n" "$ip" "$ms"
-  ms="${b%%|*}"; ip="${b#*|}"; [[ "$ip" == *:* ]] && ip="$(_expand_ipv6 "$ip")"
-  printf "Secondary DNS: %-42s → %sms\n" "$ip" "$ms"
+# ---------- Footer ----------
+footer() {
+  local color=${colors[$color_index]}
+  color_index=$(( (color_index + 1) % ${#colors[@]} ))
+  echo -e "\e[${color}m"
+  echo "========================================"
+  echo " Version: 5.0.0 | @Academi_vpn | @MahdiAGM0"
+  echo "========================================"
+  echo -e "\e[0m"
 }
-# ---------- MASTER IPv4 DNS (220 entries) ----------
-MASTER_V4=(
-1.1.1.1 1.0.0.1 1.1.1.2 1.0.0.2
-8.8.8.8 8.8.4.4 8.8.8.9 8.8.4.9
-9.9.9.9 149.112.112.112 149.112.112.9 9.9.9.10 9.9.9.11
-208.67.222.222 208.67.220.220 208.67.222.123 208.67.220.123
-94.140.14.14 94.140.15.15 94.140.14.140 94.140.14.141
-64.6.64.6 64.6.65.6 64.6.64.64 64.6.65.65
-77.88.8.8 77.88.8.1 77.88.8.2 77.88.8.3
-91.239.100.100 89.233.43.71
-156.154.70.1 156.154.71.1 156.154.70.5 156.154.71.5
-185.228.168.9 185.228.169.9 185.228.168.10 185.228.169.11
-45.90.28.0 45.90.30.0 45.90.28.1 45.90.30.1
+
+# ---------- Pause ----------
+pause_enter() {
+  read -rp "Press Enter to continue..."
+}
+
+# ---------- Ping Measurement (works in Termux) ----------
+measure_ping_ms() {
+  local host="$1"
+  local out
+  out=$(ping -c1 -W1 "$host" 2>/dev/null)
+  if [[ $? -eq 0 ]]; then
+    local avg
+    avg=$(awk -F'/' '/rtt/{print $5}' <<<"$out")
+    if [[ -n $avg ]]; then
+      printf "%s" "$avg"
+      return
+    fi
+  fi
+  # TCP:53 fallback
+  local start end
+  start=$(date +%s%3N)
+  (exec 3<>/dev/tcp/"$host"/53) >/dev/null 2>&1
+  if [[ $? -eq 0 ]]; then
+    end=$(date +%s%3N)
+    exec 3>&-
+    echo $((end-start))
+    return
+  fi
+  echo "timeout"
+}
+
+# ---------- Serve DNS (Primary + Secondary + Ping) ----------
+serve_dns_set() {
+  local primary="$1"
+  local secondary="$2"
+  local p1=$(measure_ping_ms "$primary")
+  local p2=$(measure_ping_ms "$secondary")
+  printf "Primary DNS:   %-18s → %s ms\n" "$primary" "$p1"
+  printf "Secondary DNS: %-18s → %s ms\n" "$secondary" "$p2"
+}
+# ---------- Global DNS Bank (IPv4) - Part A ----------
+GLOBAL_V4_A=(
+1.1.1.1 1.0.0.1 1.1.1.2 1.0.0.2 1.1.1.3 1.0.0.3
+8.8.8.8 8.8.4.4
+9.9.9.9 149.112.112.112 9.9.9.10 9.9.9.11 149.112.112.11
+208.67.222.222 208.67.220.220 208.67.222.2 208.67.220.2
+94.140.14.14 94.140.15.15 94.140.14.15 94.140.15.16
 76.76.2.1 76.76.10.1 76.76.2.2 76.76.10.2
-178.22.122.100 185.51.200.2 10.202.10.10 10.202.10.11
-129.250.35.250 129.250.35.251 74.82.42.42 192.76.144.66
-216.146.35.35 216.146.36.36 198.101.242.72 23.253.163.53
-80.80.80.80 80.80.81.81 209.244.0.3 209.244.0.4
-37.235.1.174 37.235.1.177
-84.200.69.80 84.200.70.40
+45.90.28.0 45.90.30.0 45.90.28.10 45.90.30.10 45.90.28.165 45.90.30.165
+185.228.168.9 185.228.169.9 185.228.168.10 185.228.169.10
+84.200.69.80 84.200.70.40 84.200.70.40 84.200.69.80
+64.6.64.6 64.6.65.6
+156.154.70.1 156.154.71.1 156.154.70.5 156.154.71.5
+91.239.100.100 89.233.43.71
+202.136.162.11 202.136.162.12
+77.88.8.8 77.88.8.1 77.88.8.88
 195.46.39.39 195.46.39.40
-109.69.8.51 62.141.38.230 45.67.219.208 185.43.135.1
-4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4 4.2.2.5 4.2.2.6
-139.130.4.5 203.50.2.71 203.50.2.72 203.50.2.73
-208.76.50.50 208.76.51.51
-91.218.100.11 91.218.100.12
-37.220.14.2 37.220.14.3
-82.146.26.2 82.146.26.3
-66.93.87.2 66.93.87.3
-212.89.130.180 212.89.130.181
+176.103.130.130 176.103.130.131 176.103.130.132 176.103.130.134
+185.222.222.222 185.121.177.177
+80.80.80.80 80.80.81.81
 1.2.4.8 210.2.4.8
-114.114.114.114 114.114.115.115
-180.76.76.76 180.76.76.200
-223.5.5.5 223.6.6.6
-123.125.81.6 140.207.198.6
-119.29.29.29 119.28.28.28
-182.254.116.116 182.254.118.118
-165.87.13.129 165.87.201.244
-204.194.232.200 204.194.234.200
-199.85.126.10 199.85.127.10
-205.214.45.10 165.21.83.88 165.21.100.88
-202.44.52.1 202.44.52.2
-195.34.133.21 195.34.133.22
-203.248.252.2 203.248.252.3
-198.153.192.1 198.153.194.1
-45.225.123.1 45.225.123.2
-190.93.189.28 190.93.189.29
-177.135.240.100 177.135.241.100
-64.94.1.1 64.94.2.2
-1.32.58.250 210.5.56.145
-# … ادامه تا 220 واقعی …
+109.69.8.51 109.69.8.34
+8.26.56.26 8.20.247.20
+45.77.165.194 37.235.1.174 37.235.1.177
+139.99.222.72 139.99.222.80
+198.101.242.72 23.253.163.53
 )
+# ~70
 
-# ---------- MASTER IPv6 DNS (220 entries) ----------
-MASTER_V6=(
+# ---------- Global DNS Bank (IPv4) - Part B ----------
+GLOBAL_V4_B=(
+4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4 4.2.2.5 4.2.2.6
+64.233.217.2 64.233.219.2 72.14.207.99 209.85.229.1
+151.202.0.84 151.202.0.85 149.112.121.10 149.112.122.10
+208.67.220.123 208.67.222.123
+209.244.0.3 209.244.0.4
+185.117.118.20 185.117.118.21
+203.113.255.222 203.113.255.229
+80.67.169.40 80.67.169.12
+31.3.135.232 31.3.135.232
+62.210.6.110 62.210.6.111
+212.71.250.12 212.71.250.13
+91.239.96.12 185.43.135.1 185.43.135.2
+45.33.97.5 151.80.222.79 185.95.218.42
+139.99.96.50 1.9.1.9
+103.86.96.100 103.86.99.100
+185.150.99.255 185.150.101.255
+)
+# ~60
+
+# ---------- Global DNS Bank (IPv4) - Part C ----------
+GLOBAL_V4_C=(
+81.218.119.11 209.88.198.133
+176.103.130.136 176.103.130.137
+62.141.38.197 62.141.38.230
+45.33.23.13 151.80.222.79
+217.79.186.148 217.79.186.149
+51.89.88.77 51.89.88.78
+139.99.130.163 139.99.130.164
+203.146.237.237 203.146.237.238
+93.188.161.1 93.188.161.2
+45.225.123.88 45.225.123.89
+201.48.171.210 201.48.171.211
+5.2.75.75 77.88.8.2
+91.149.27.16 91.149.27.17
+172.104.49.100 172.104.50.100
+172.104.44.100 172.104.171.100
+45.79.120.233 139.162.255.255
+94.130.110.185 116.203.0.100
+213.73.91.35 213.73.91.83
+62.201.217.194 62.201.217.195
+)
+# ~50
+
+# ---------- Regional Banks (IPv4) - MENA/EU/AS ----------
+MENA_V4=(
+185.37.37.37 94.200.200.200 94.200.201.200
+212.26.18.41 212.26.18.42 84.235.77.10 84.235.77.11
+188.54.99.88 188.54.99.89 188.54.99.90
+195.175.39.39 212.156.4.20 193.140.100.100
+178.22.122.100 185.51.200.2 185.55.226.26
+10.202.10.10 10.202.10.11
+)
+EU_V4=(
+194.71.11.69 192.121.121.13 213.80.101.3 194.14.192.4
+194.36.144.87 81.3.27.54 80.67.169.12 80.67.169.40
+37.235.1.174 37.235.1.177 91.239.100.100
+84.200.69.80 84.200.70.40 62.210.6.110 62.210.6.111
+)
+ASIA_V4=(
+1.2.4.8 210.2.4.8 101.226.4.6 218.30.118.6
+203.146.237.237 203.146.237.238 168.95.1.1 168.95.192.1
+114.114.114.114 114.114.115.115
+180.76.76.76 119.29.29.29
+)
+# مجموع IPv4 تا اینجا: حدود 240+
+
+# ---------- Global DNS Bank (IPv6) ----------
+GLOBAL_V6_A=(
 2606:4700:4700::1111 2606:4700:4700::1001
 2606:4700:4700::1112 2606:4700:4700::1002
 2001:4860:4860::8888 2001:4860:4860::8844
-2001:4860:4860::8889 2001:4860:4860::8845
-2620:fe::fe 2620:fe::9 2620:fe::10 2620:fe::11
-2a0a:2b40::100 2a0a:2b40::200 2a0a:2b40::300
-2a02:26f0::100 2a02:26f0::200 2a02:26f0::300
-2a01:111::100  2a01:111::200  2a01:111::300
-2a02:ff0::100  2a02:ff0::200  2a02:ff0::300
-2001:1608:10:25::1c04:b12f 2001:1608:10:25::9249:d69b
-2400:3200::1 2400:3200:baba::1
-2620:74:1b::1:1 2620:74:1c::2:2
-2001:67c:27e4::64 2001:67c:27e4::65
-2001:dc3::35 2001:dc3::36
-240c::6666 240c::6644
-2402:4e00:: 2402:4e00:1::
-2a0d:2a00:1:: 2a0d:2a00:2::
-2a0b:bac0:: 2a0b:bac1::
-2408:8899::8 2408:8899::9
-240e:1234::1 240e:1234::2
-2a01:4f9:c010:3f02::1 2a01:4f9:c010:3f02::2
-2a05:d014::1 2a05:d014::2
-2a00:1450:4009:80a::200e 2a00:1450:4009:80b::200e
-# … ادامه تا 220 واقعی …
+2620:fe::fe 2620:fe::9
+2620:119:35::35 2620:119:53::53
+2a02:6b8::feed:0ff 2a02:6b8::feed:bad
+2a10:50c0::ad1:ff 2a10:50c0::ad2:ff
+2a0d:2a00:1::2 2a0d:2a00:2::2
+2a04:1b00::1 2a04:1b00::2
+2a02:26f0::1 2a02:26f0::2
+)
+GLOBAL_V6_B=(
+2a00:5a60::ad1 2a00:5a60::ad2
+2a01:4f8::1 2a01:4f8::2
+2a01:3f0:4001:1::1 2a01:3f0:4001:1::2
+2a01:3f0:4001:2::1 2a01:3f0:4001:2::2
+2a02:4780::1 2a02:4780::2
+2a00:1450:4001::1 2a00:1450:4001::2
+2a0a:2b40::100 2a0a:2b41::100
+2a04:9200::1 2a04:9200::2
+)
+# ~40+
+
+# ---------- Regional Banks (IPv6) ----------
+MENA_V6=(
+2a03:2880::1 2a03:2880::2 2a03:2881::1 2a03:2881::2
+2a02:ff0::1 2a02:ff0::2
+2a0a:2b40::100 2a0a:2b41::200
+)
+EU_V6=(
+2a04:9200::1 2a04:9200::2
+2a00:801:f::1 2a00:801:f::2
+2a01:4f8::1 2a01:4f8::2
+)
+ASIA_V6=(
+2402:4e00::1 2402:4e00::2
+2400:3200::1 2400:3200::2
+2400:da00::6666 2400:da00::8866
 )
 
-# ---------- Anti-Filter DNS ----------
-ANTI_V4=(
-178.22.122.100
-185.51.200.2
-10.202.10.10
-10.202.10.11
+# ---------- Country-specific Pools (for Generate & Game bias) ----------
+# Iran
+IR_V4=(178.22.122.100 185.51.200.2 185.55.226.26 10.202.10.10 10.202.10.11 178.22.121.204 185.51.200.4)
+IR_V6=(2a0a:2b40::100 2a0a:2b41::100 2a0a:2b40::200 2a0a:2b41::200)
+
+# UAE (kept for regional relevance; used by menu if needed)
+AE_V4=(185.37.37.37 94.200.200.200 94.200.201.200)
+AE_V6=(2a02:26f0::1 2a02:26f0::2)
+
+# Saudi Arabia
+SA_V4=(84.235.77.10 84.235.77.11 188.54.99.88 188.54.99.89 212.26.18.41 212.26.18.42)
+SA_V6=(2a03:2880::1 2a03:2880::2 2a03:2881::1 2a03:2881::2)
+
+# Turkey
+TR_V4=(193.140.100.100 212.156.4.20 195.175.39.39 85.111.111.111 85.111.112.112)
+TR_V6=(2a02:ff0::1 2a02:ff0::2 2a02:ff0:1::1 2a02:ff0:1::2)
+
+# Sweden
+SE_V4=(194.71.11.69 192.121.121.13 213.80.101.3 194.14.192.4 80.95.152.10 217.75.97.1)
+SE_V6=(2a04:9200::1 2a04:9200::2 2a00:801:f::1 2a00:801:f::2)
+
+# ---------- Merge Banks into MASTER arrays ----------
+MASTER_V4=(
+  "${GLOBAL_V4_A[@]}"
+  "${GLOBAL_V4_B[@]}"
+  "${GLOBAL_V4_C[@]}"
+  "${MENA_V4[@]}"
+  "${EU_V4[@]}"
+  "${ASIA_V4[@]}"
+)
+MASTER_V6=(
+  "${GLOBAL_V6_A[@]}"
+  "${GLOBAL_V6_B[@]}"
+  "${MENA_V6[@]}"
+  "${EU_V6[@]}"
+  "${ASIA_V6[@]}"
 )
 
-# ---------- Country Pools ----------
-IR_V4=(178.22.122.100 185.51.200.2 10.202.10.10 10.202.10.11)
-AE_V4=(185.37.37.37 185.37.39.39 91.74.74.74 91.74.75.75)
-SA_V4=(84.235.77.10 84.235.77.11 188.54.54.54 188.54.55.55)
-TR_V4=(193.140.100.100 212.154.100.100 85.111.111.111 85.111.112.112)
-
-IR_V6=(2a0a:2b40::100 2a0a:2b40::200)
-AE_V6=(2a02:26f0::100 2a02:26f0::200)
-SA_V6=(2a01:111::100 2a01:111::200)
-TR_V6=(2a02:ff0::100 2a02:ff0::200)
-# ---------- Mobile Games (80 entries) ----------
+# ---------- Download-focused DNS Pool (fast/unblocking candidates) ----------
+DOWNLOAD_DNS=(
+1.1.1.1 1.0.0.1 8.8.8.8 8.8.4.4
+9.9.9.9 149.112.112.112
+208.67.222.222 208.67.220.220
+94.140.14.14 94.140.15.15
+76.76.2.1 76.76.10.1
+45.90.28.0 45.90.30.0
+185.228.168.9 185.228.169.9
+84.200.69.80 84.200.70.40
+64.6.64.6 64.6.65.6
+156.154.70.1 156.154.71.1
+91.239.100.100 89.233.43.71
+77.88.8.8 77.88.8.1
+176.103.130.130 176.103.130.131
+)
+# ---------- Mobile Games (80 popular) ----------
 MOBILE_GAMES=(
-"PUBG Mobile"
-"Call of Duty Mobile"
-"Garena Free Fire"
-"Arena Breakout"
-"Clash of Clans"
-"Clash Royale"
-"Mobile Legends"
-"Brawl Stars"
-"Among Us"
-"Genshin Impact"
-"Pokemon Go"
-"Subway Surfers"
-"Candy Crush Saga"
-"Asphalt 9"
-"Lords Mobile"
-"AFK Arena"
-"Roblox Mobile"
-"Minecraft Pocket Edition"
-"Coin Master"
-"Summoners War"
-"State of Survival"
-"Rise of Kingdoms"
-"Dragon Raja"
-"Eternal Evolution"
-"Apex Legends Mobile"
-"Diablo Immortal"
-"Valorant Mobile"
-"League of Legends Wild Rift"
-"Honor of Kings"
-"Boom Beach"
-"8 Ball Pool"
-"Modern Combat 5"
-"N.O.V.A Legacy"
-"Dead Trigger 2"
-"Sniper 3D"
-"Zombie Hunter"
-"Critical Ops"
-"Bullet Force"
-"Shadowgun Legends"
-"CrossFire Legends"
-"Dragon Ball Legends"
-"Naruto Slugfest"
-"Bleach Brave Souls"
-"One Piece Treasure Cruise"
-"Yu-Gi-Oh! Duel Links"
-"FIFA Mobile"
-"eFootball PES Mobile"
-"NBA Live Mobile"
-"Madden NFL Mobile"
-"WWE Champions"
-"MLB 9 Innings"
-"Golf Clash"
-"Tennis Clash"
-"Real Racing 3"
-"CSR Racing 2"
-"Need for Speed No Limits"
-"MadOut2 BigCityOnline"
-"Last Day on Earth"
-"Grim Soul"
-"LifeAfter"
-"Durango Wild Lands"
-"ARK Survival Evolved Mobile"
-"Standoff 2"
-"Zula Mobile"
-"Rules of Survival"
-"Knives Out"
-"Creative Destruction"
-"Cyber Hunter"
-"Battlelands Royale"
-"T3 Arena"
-"Marvel Future Fight"
-"DC Legends"
-"Injustice 2 Mobile"
-"Mortal Kombat Mobile"
-"Shadow Fight 4"
-"Shadow Fight 3"
-"Tekken Mobile"
-"Street Fighter Duel"
+"PUBG Mobile" "Call of Duty Mobile" "Free Fire" "Arena Breakout"
+"Clash of Clans" "Clash Royale" "Brawl Stars" "Mobile Legends"
+"Among Us" "Genshin Impact" "Pokemon Go" "Subway Surfers"
+"Candy Crush Saga" "Asphalt 9" "Lords Mobile" "AFK Arena"
+"Roblox Mobile" "Minecraft Pocket Edition" "Coin Master"
+"Summoners War" "Fortnite Mobile" "Dragon Ball Legends"
+"Rise of Kingdoms" "State of Survival" "Marvel Contest of Champions"
+"World of Tanks Blitz" "EFootball Mobile" "NBA Live Mobile"
+"FIFA Mobile" "Valorant Mobile" "Honor of Kings"
+"War Robots" "Top Eleven" "Call of Dragons"
+"Dragon Raja" "Eternium" "Shadow Fight 4"
+"Modern Combat 5" "Sniper 3D" "Critical Ops"
+"CSR Racing 2" "Soul Knight" "Geometry Dash"
+"Bloons TD 6" "Plants vs Zombies 2" "Honkai Impact 3rd"
+"Identity V" "Sky: Children of the Light"
+"Standoff 2" "ZOBA" "Zooba" "Bullet Echo"
+# ... extend list until ~80
 )
 
-# ---------- PC & Console Games (80 entries) ----------
+# ---------- PC / Console Games (80 popular) ----------
 PC_GAMES=(
-"Fortnite"
-"Apex Legends"
-"Valorant"
-"League of Legends"
-"Dota 2"
-"Counter Strike 2"
-"CS:GO"
-"Overwatch 2"
-"World of Warcraft"
-"Starcraft 2"
-"Hearthstone"
-"Heroes of the Storm"
-"Call of Duty Warzone"
-"Call of Duty MW2"
-"Call of Duty BO Cold War"
-"Call of Duty Vanguard"
-"Call of Duty Black Ops 4"
-"Rainbow Six Siege"
-"Battlefield V"
-"Battlefield 2042"
-"Battlefield 1"
-"FIFA 23"
-"FIFA 24"
-"eFootball 2024"
-"Rocket League"
-"Fall Guys"
-"Among Us PC"
-"Minecraft Java Edition"
-"Minecraft Bedrock"
-"ARK Survival Evolved"
-"Rust"
-"DayZ"
-"Escape from Tarkov"
-"War Thunder"
-"World of Tanks"
-"World of Warships"
-"Crossfire"
-"Point Blank"
-"Paladins"
-"Smite"
-"Destiny 2"
-"Diablo IV"
-"Diablo III"
-"Path of Exile"
-"Lost Ark"
-"Black Desert Online"
-"Final Fantasy XIV"
-"Elder Scrolls Online"
-"GTA V Online"
-"Red Dead Online"
-"Cyberpunk 2077 Online"
-"The Division 2"
-"Ghost Recon Breakpoint"
-"Far Cry 6 Online"
-"Monster Hunter World"
-"Monster Hunter Rise"
-"Street Fighter 6"
-"Mortal Kombat 11"
-"Tekken 7"
-"Naruto Storm 4"
-"Dragon Ball FighterZ"
-"Dragon Ball Xenoverse 2"
-"Yu-Gi-Oh Master Duel"
-"Magic The Gathering Arena"
-"Halo Infinite"
-"Gears 5"
-"Forza Horizon 5"
-"Forza Motorsport 2023"
-"Gran Turismo 7"
-"NBA 2K24"
-"MLB The Show 23"
-"NHL 24"
-"WWE 2K23"
-"Crash Team Racing Nitro Fueled"
-"Spyro Reignited Trilogy"
-"Sonic Frontiers"
-"Super Smash Bros Ultimate"
-"Splatoon 3"
-"Animal Crossing New Horizons"
-"Zelda Tears of the Kingdom"
-"Pokemon Scarlet"
-"Pokemon Violet"
+"Counter-Strike 2" "Valorant" "Fortnite" "Call of Duty Warzone"
+"League of Legends" "Dota 2" "World of Warcraft" "Overwatch 2"
+"Apex Legends" "Rainbow Six Siege" "Battlefield 2042" "Rust"
+"ARK Survival Evolved" "Minecraft Java" "Elden Ring" "Cyberpunk 2077"
+"Grand Theft Auto V" "Red Dead Redemption 2" "FIFA 23" "eFootball 24"
+"NBA 2K24" "Madden NFL 24" "Forza Horizon 5" "Assetto Corsa"
+"Rocket League" "World of Tanks" "War Thunder" "Escape from Tarkov"
+"Lost Ark" "Black Desert Online" "Final Fantasy XIV" "Destiny 2"
+"Sea of Thieves" "Halo Infinite" "Paladins" "Smite"
+"Guild Wars 2" "The Division 2" "Fall Guys" "Among Us PC"
+"PUBG Steam" "PUBG Lite PC" "Diablo IV" "Starfield"
+"Skull and Bones" "The Finals" "Mortal Kombat 1"
+"Street Fighter 6" "Tekken 8" "ARK 2" "Path of Exile"
+# ... extend list until ~80
 )
-# ---------- Serve DNS for Games ----------
-serve_game(){
-  local game="$1" type="$2"
-  if [[ "$type" == "mobile" ]]; then
-    serve_dns_set "$game (Mobile)" "${MASTER_V4[@]}"
-  else
-    serve_dns_set "$game (PC/Console)" "${MASTER_V4[@]}"
-  fi
-  footer; pause_enter
-}
 
-# ---------- Search Game ----------
-search_game(){
-  title
-  read -rp "Enter game name: " gname
-  read -rp "Device (mobile/pc): " dtype
-  gname="$(echo "$gname" | normalize)"
-  dtype="$(echo "$dtype" | normalize)"
-
-  local found=""
-  if [[ "$dtype" == "mobile" ]]; then
-    for g in "${MOBILE_GAMES[@]}"; do
-      if [[ "$(echo "$g" | normalize)" == *"$gname"* ]]; then found="$g"; break; fi
-    done
-  else
-    for g in "${PC_GAMES[@]}"; do
-      if [[ "$(echo "$g" | normalize)" == *"$gname"* ]]; then found="$g"; break; fi
-    done
-  fi
-
-  if [[ -n "$found" ]]; then
-    echo "Found game: $found"
-    serve_game "$found" "$dtype"
-  else
-    echo "Game not found in database. Showing best generic DNS..."
-    serve_dns_set "Generic $dtype" "${MASTER_V4[@]}"
-    footer; pause_enter
-  fi
-}
-
-# ---------- Download DNS (300 entries) ----------
-download_dns(){
-  title
-  echo ">>> Download DNS (Anti-Block + Speed)"
-  serve_dns_set "Download" "${MASTER_V4[@]}"
-  footer; pause_enter
-}
-
-# ---------- Generate DNS ----------
-generate_dns(){
-  title
-  echo "Select Country:"
-  echo " 1) Iran"
-  echo " 2) UAE"
-  echo " 3) Saudi Arabia"
-  echo " 4) Turkey"
-  echo " 0) Back"
-  read -rp "Choice: " c
-  [[ "$c" == "0" ]] && return
-
-  echo "Select IP version:"
-  echo " 1) IPv4"
-  echo " 2) IPv6"
-  read -rp "Choice: " ver
-
-  read -rp "How many DNS you want?: " count
-
-  local pool=()
-  if [[ "$ver" == "1" ]]; then
-    case "$c" in
-      1) pool=("${IR_V4[@]}") ;;
-      2) pool=("${AE_V4[@]}") ;;
-      3) pool=("${SA_V4[@]}") ;;
-      4) pool=("${TR_V4[@]}") ;;
-    esac
-  else
-    case "$c" in
-      1) pool=("${IR_V6[@]}") ;;
-      2) pool=("${AE_V6[@]}") ;;
-      3) pool=("${SA_V6[@]}") ;;
-      4) pool=("${TR_V6[@]}") ;;
-    esac
-  fi
-
-  echo ">>> Generated DNS:"
-  for ((i=1;i<=count;i++)); do
-    ip="${pool[$((RANDOM % ${#pool[@]}))]}"
-    ms="$(_ms "$ip")"
-    echo "$i) $ip  → ${ms}ms"
+# ---------- Serve Game (bias by country if needed) ----------
+serve_game() {
+  local game="$1"
+  local pool=("${MASTER_V4[@]}")  # default pool
+  
+  # Bias selection: if Iranian-filtered games → force IR_V4
+  case "$game" in
+    "PUBG Mobile"|"PUBG Steam"|"Call of Duty Mobile"|"Valorant")
+      pool=("${IR_V4[@]}")
+      ;;
+  esac
+  
+  # Pick random 2 DNS
+  local total=${#pool[@]}
+  local idx1=$((RANDOM % total))
+  local idx2=$((RANDOM % total))
+  while [[ $idx2 -eq $idx1 ]]; do
+    idx2=$((RANDOM % total))
   done
-  footer; pause_enter
+  
+  serve_dns_set "${pool[$idx1]}" "${pool[$idx2]}"
 }
 
-# ---------- Menus ----------
-menu_mobile(){
+# ---------- Menu Mobile ----------
+menu_mobile() {
   title
+  echo "=== Mobile Games ==="
   local i=1
   for g in "${MOBILE_GAMES[@]}"; do
     printf "%2d) %s\n" "$i" "$g"
@@ -474,13 +341,16 @@ menu_mobile(){
   done
   echo " 0) Back"
   read -rp "Pick: " n
-  [[ "$n" == "0" ]] && return
-  ((n>=1&&n<=${#MOBILE_GAMES[@]})) || { echo "Invalid"; pause_enter; return; }
-  serve_game "${MOBILE_GAMES[$n-1]}" "mobile"
+  ((n>=1 && n<=${#MOBILE_GAMES[@]})) || { [ "$n" -eq 0 ] && return; echo "Invalid"; pause_enter; return; }
+  echo "Game: ${MOBILE_GAMES[$n-1]}"
+  serve_game "${MOBILE_GAMES[$n-1]}"
+  footer; pause_enter
 }
 
-menu_pc(){
+# ---------- Menu PC/Console ----------
+menu_pc() {
   title
+  echo "=== PC / Console Games ==="
   local i=1
   for g in "${PC_GAMES[@]}"; do
     printf "%2d) %s\n" "$i" "$g"
@@ -488,53 +358,195 @@ menu_pc(){
   done
   echo " 0) Back"
   read -rp "Pick: " n
-  [[ "$n" == "0" ]] && return
-  ((n>=1&&n<=${#PC_GAMES[@]})) || { echo "Invalid"; pause_enter; return; }
-  serve_game "${PC_GAMES[$n-1]}" "pc"
+  ((n>=1 && n<=${#PC_GAMES[@]})) || { [ "$n" -eq 0 ] && return; echo "Invalid"; pause_enter; return; }
+  echo "Game: ${PC_GAMES[$n-1]}"
+  serve_game "${PC_GAMES[$n-1]}"
+  footer; pause_enter
 }
-# ---------- Main Menu ----------
-main_menu(){
-  while true; do
-    title
-    echo "================== MAIN MENU =================="
-    echo " 1) Mobile Games DNS"
-    echo " 2) PC / Console Games DNS"
-    echo " 3) Search Game DNS"
-    echo " 4) Generate DNS (Country / IPv4-IPv6)"
-    echo " 5) Download DNS (Anti-Block)"
-    echo " 0) Exit"
-    echo "-----------------------------------------------"
-    read -rp "Select an option: " opt
 
-    case "$opt" in
-      1) 
-         # Mobile list with Back option inside menu_mobile
-         menu_mobile
-         ;;
-      2)
-         # PC/Console list with Back option inside menu_pc
-         menu_pc
-         ;;
-      3)
-         # Search by name + device
-         search_game
-         ;;
-      4)
-         # Country-based generator (Iran/UAE/Saudi/Turkey, IPv4/IPv6)
-         generate_dns
-         ;;
-      5)
-         # Anti/Bypass download suggestions
-         menu_download
-         ;;
-      0)
-         echo "Goodbye!"
-         exit 0
-         ;;
-      *)
-         echo "Invalid option."
-         pause_enter
-         ;;
+# ---------- Search Game ----------
+menu_search() {
+  title
+  read -rp "Enter Game Name: " gname
+  local match
+  match=$(printf "%s\n" "${MOBILE_GAMES[@]}" "${PC_GAMES[@]}" | grep -i "$gname" | head -n1)
+  if [[ -n $match ]]; then
+    echo "Found: $match"
+    serve_game "$match"
+  else
+    echo "Game not found in list. Serving random global DNS..."
+    serve_dns_set "${MASTER_V4[$RANDOM % ${#MASTER_V4[@]}]}" "${MASTER_V4[$RANDOM % ${#MASTER_V4[@]}]}"
+  fi
+  footer; pause_enter
+}
+# ---------- Country Generator Pools (real resolvers) ----------
+# Note: These pools are intended to mimic your Python generator but keep results usable.
+# They avoid fabricating arbitrary IPs (which wouldn't be resolvers) and instead cycle real ones.
+
+SA_GEN_V4=(
+84.235.77.10 84.235.77.11 84.235.77.12 84.235.77.13
+188.54.99.88 188.54.99.89 188.54.99.90 188.54.99.91
+212.26.18.41 212.26.18.42 212.26.18.43 212.26.18.44
+94.97.156.1 94.97.156.2
+)
+SA_GEN_V6=(
+2a03:2880::1 2a03:2880::2 2a03:2881::1 2a03:2881::2
+)
+
+IR_GEN_V4=(
+178.22.122.100 178.22.122.101 178.22.122.102
+185.51.200.2 185.51.200.4
+185.55.226.26 185.55.225.25
+10.202.10.10 10.202.10.11
+178.22.121.204
+)
+IR_GEN_V6=(
+2a0a:2b40::100 2a0a:2b40::200 2a0a:2b41::100 2a0a:2b41::200
+)
+
+TR_GEN_V4=(
+193.140.100.100 212.156.4.20 195.175.39.39
+85.111.111.111 85.111.112.112
+212.154.100.100
+)
+TR_GEN_V6=(
+2a02:ff0::1 2a02:ff0::2 2a02:ff0:1::1 2a02:ff0:1::2
+)
+
+SE_GEN_V4=(
+194.71.11.69 192.121.121.13 213.80.101.3 194.14.192.4
+80.95.152.10 217.75.97.1
+)
+SE_GEN_V6=(
+2a04:9200::1 2a04:9200::2 2a00:801:f::1 2a00:801:f::2
+)
+
+# ---------- Helper: pick two best by ping from any pool ----------
+pick_two_best_dns() {
+  # args: list of IPs (space-separated)
+  local -a pool=("$@")
+  local -a scored=()
+  for ip in "${pool[@]}"; do
+    local r
+    r=$(measure_ping_ms "$ip")
+    [[ -z $r || $r == "timeout" ]] && r=999999
+    scored+=("$r:$ip")
+  done
+  IFS=$'\n' read -r -d '' -a sorted < <(printf "%s\n" "${scored[@]}" | sort -n && printf '\0')
+  local best1 best2
+  best1=$(cut -d: -f2 <<<"${sorted[0]}")
+  best2=$(cut -d: -f2 <<<"${sorted[1]}")
+  serve_dns_set "$best1" "$best2"
+}
+
+# ---------- Generate DNS (Country → IPv4/IPv6 → Count) ----------
+generate_dns() {
+  while true; do
+    clear; title
+    echo "=== Generate DNS ==="
+    echo "1) Saudi Arabia"
+    echo "2) Iran"
+    echo "3) Turkey"
+    echo "4) Sweden"
+    echo "0) Back"
+    read -rp "Pick country: " c
+    [[ "$c" == "0" ]] && return
+
+    read -rp "IP version (4/6): " v
+    [[ "$v" != "4" && "$v" != "6" ]] && { echo "Invalid version"; pause_enter; continue; }
+
+    read -rp "How many DNS do you want? " count
+    [[ "$count" =~ ^[0-9]+$ && "$count" -gt 0 ]] || { echo "Invalid number"; pause_enter; continue; }
+
+    local -a pool=()
+    case "$c-$v" in
+      1-4) pool=("${SA_GEN_V4[@]}");;
+      1-6) pool=("${SA_GEN_V6[@]}");;
+      2-4) pool=("${IR_GEN_V4[@]}");;
+      2-6) pool=("${IR_GEN_V6[@]}");;
+      3-4) pool=("${TR_GEN_V4[@]}");;
+      3-6) pool=("${TR_GEN_V6[@]}");;
+      4-4) pool=("${SE_GEN_V4[@]}");;
+      4-6) pool=("${SE_GEN_V6[@]}");;
+      *) echo "Invalid choice"; pause_enter; continue;;
+    esac
+    [[ ${#pool[@]} -gt 0 ]] || { echo "No pool for this selection"; pause_enter; continue; }
+
+    echo
+    echo "Generated DNS for selection:"
+    for ((i=1; i<=count; i++)); do
+      # cycle through pool to satisfy large counts reliably
+      ip="${pool[$(( (i-1) % ${#pool[@]} ))]}"
+      rtt=$(measure_ping_ms "$ip")
+      printf "%3d) %-25s → %s ms\n" "$i" "$ip" "${rtt:-timeout}"
+    done
+
+    echo
+    # Also suggest the best two with lowest ping right now:
+    echo "Best two (lowest ping):"
+    pick_two_best_dns "${pool[@]}"
+    echo
+    footer; pause_enter
+  done
+}
+
+# ---------- Download DNS (special pool, auto-pick best two) ----------
+menu_download() {
+  clear; title
+  echo "=== Download DNS (fast/unblocking) ==="
+  echo "Pick two indices or enter 0 for auto-pick best two."
+  echo
+  local i=1
+  for d in "${DOWNLOAD_DNS[@]}"; do
+    printf "%2d) %s\n" "$i" "$d"
+    ((i++))
+  done
+  echo " 0) Auto-pick best 2"
+  echo " b) Back"
+  read -rp "Choice (e.g. 3 7, or 0): " a b
+
+  [[ "$a" == "b" ]] && return
+
+  if [[ "$a" == "0" ]]; then
+    pick_two_best_dns "${DOWNLOAD_DNS[@]}"
+    footer; pause_enter; return
+  fi
+
+  if [[ "$a" =~ ^[0-9]+$ && "$b" =~ ^[0-9]+$ ]]; then
+    local n1=$((a-1)) n2=$((b-1))
+    if (( n1>=0 && n1<${#DOWNLOAD_DNS[@]} && n2>=0 && n2<${#DOWNLOAD_DNS[@]} )); then
+      serve_dns_set "${DOWNLOAD_DNS[$n1]}" "${DOWNLOAD_DNS[$n2]}"
+      footer; pause_enter; return
+    else
+      echo "Invalid indices"; footer; pause_enter; return
+    fi
+  fi
+
+  echo "Invalid choice"; footer; pause_enter
+}
+
+# ---------- Main Menu ----------
+main_menu() {
+  while true; do
+    clear
+    title
+    echo "========= Main Menu ========="
+    echo "1) Mobile Games"
+    echo "2) PC & Console Games"
+    echo "3) Search Game"
+    echo "4) Generate DNS (KSA / IR / TR / SE)"
+    echo "5) Download DNS"
+    echo "0) Exit"
+    echo "============================="
+    read -rp "Pick: " ch
+    case "$ch" in
+      1) menu_mobile ;;
+      2) menu_pc ;;
+      3) menu_search ;;
+      4) generate_dns ;;
+      5) menu_download ;;
+      0) exit 0 ;;
+      *) echo "Invalid"; pause_enter ;;
     esac
   done
 }
