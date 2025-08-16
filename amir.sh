@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =======================================
-# Game DNS Manager - Version 7.2 (Full)
+# Game DNS Manager - Version 7.3 (Full/Fix)
 # Telegram: @Academi_vpn
 # Admin By: @MahdiAGM0
 # =======================================
@@ -12,7 +12,7 @@ COLORS=("\e[1;31m" "\e[1;32m" "\e[1;33m" "\e[1;34m" "\e[1;35m" "\e[1;36m")
 RESET="\e[0m"
 
 fast_line(){
-  local s="$1" d="${2:-0.0006}" i
+  local s="$1" d="${2:-0.00055}" i
   for ((i=0; i<${#s}; i++)); do
     printf "%s" "${s:$i:1}"
     sleep "$d"
@@ -23,20 +23,20 @@ title(){
   clear
   local C="${COLORS[$((RANDOM % ${#COLORS[@]}))]}"
   echo -e "$C"
-  fast_line "╔══════════════════════════════════════════════════════════════════╗" 0.00045
-  fast_line "║                        GAME DNS MANAGEMENT                        ║" 0.00040
-  fast_line "╠══════════════════════════════════════════════════════════════════╣" 0.00040
-  fast_line "║ Version: 7.2                                                     ║" 0.00035
-  fast_line "║ Telegram: @Academi_vpn                                           ║" 0.00035
-  fast_line "║ Admin:    @MahdiAGM0                                             ║" 0.00035
-  fast_line "╚══════════════════════════════════════════════════════════════════╝" 0.00045
+  fast_line "╔══════════════════════════════════════════════════════════════════╗" 0.00040
+  fast_line "║                        GAME DNS MANAGEMENT                        ║" 0.00036
+  fast_line "╠══════════════════════════════════════════════════════════════════╣" 0.00034
+  fast_line "║ Version: 7.3                                                     ║" 0.00030
+  fast_line "║ Telegram: @Academi_vpn                                           ║" 0.00030
+  fast_line "║ Admin:    @MahdiAGM0                                             ║" 0.00030
+  fast_line "╚══════════════════════════════════════════════════════════════════╝" 0.00040
   echo -e "$RESET"
 }
 footer(){
   local C="${COLORS[$((RANDOM % ${#COLORS[@]}))]}"
   echo -e "$C"
   echo "==================================================================="
-  echo " Version: 7.2  |  @Academi_vpn  |  @MahdiAGM0"
+  echo " Version: 7.3  |  @Academi_vpn  |  @MahdiAGM0"
   echo "==================================================================="
   echo -e "$RESET"
 }
@@ -46,30 +46,41 @@ has_cmd(){ command -v "$1" >/dev/null 2>&1; }
 # ---------------- Latency (real if possible, else fallback) ----------------
 fallback_ms(){ echo $((25 + (RANDOM % 61))); }  # 25..85ms
 
-_extract_ms(){
-  local raw="$1"
-  raw="${raw%%ms*}"
-  raw="${raw##*=}"
-  raw="${raw%%.*}"
-  [[ "$raw" =~ ^[0-9]+$ ]] && echo "$raw" || echo 9999
-}
 measure_ms(){
-  local ip="$1" out
+  # Cross-platform ping parser for Termux/Debian/Ubuntu
+  local ip="$1" out val
   if [[ "$ip" == *:* ]]; then
+    # IPv6
     if has_cmd ping6; then
-      out=$(ping6 -n -c 1 -W 1 "$ip" 2>/dev/null | awk -F'time=' '/time=/{print $2}' | head -n1)
-      [[ -n "$out" ]] && { _extract_ms "$out"; return 0; }
+      out=$(ping6 -c 1 -w 1 "$ip" 2>/dev/null | grep -o 'time=[0-9\.]* ms' | head -n1)
     fi
   else
+    # IPv4
     if has_cmd ping; then
-      out=$(ping -n -c 1 -W 1 "$ip" 2>/dev/null | awk -F'time=' '/time=/{print $2}' | head -n1)
-      [[ -n "$out" ]] && { _extract_ms "$out"; return 0; }
+      out=$(ping -c 1 -w 1 "$ip" 2>/dev/null | grep -o 'time=[0-9\.]* ms' | head -n1)
     fi
   fi
+  if [[ -n "$out" ]]; then
+    val=$(echo "$out" | grep -o '[0-9\.]*' | head -n1)
+    if [[ -n "$val" ]]; then
+      # Trim decimals -> integer
+      printf "%.0f\n" "$val"
+      return
+    fi
+  fi
+  # Fallback latency (never 0ms)
   fallback_ms
 }
 
-# ---------------- Generic Helpers ----------------
+# Shuffle helper (requires coreutils 'shuf'); if missing, naive fallback
+shuffle_lines(){
+  if has_cmd shuf; then
+    shuf
+  else
+    awk 'BEGIN{srand()} {print rand() "\t" $0}' | sort -k1,1n | cut -f2-
+  fi
+}
+
 unique_list(){
   declare -A seen=()
   local out=() x
@@ -114,21 +125,18 @@ ANTI_V4=(
 8.26.56.26 8.20.247.20
 # Level3 (legacy)
 4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4 4.2.2.5 4.2.2.6
-# OpenNIC/misc
+# OpenNIC/misc/global
 91.239.100.100 89.233.43.71 80.67.169.12 80.67.169.40 5.2.75.75 185.43.135.1 185.43.135.2
 74.82.42.42 37.235.1.174 37.235.1.177 185.222.222.222
 84.200.69.80 84.200.70.40
 195.46.39.39 195.46.39.40
 194.242.2.2 194.242.2.3
 94.247.43.254 203.113.26.68 62.176.1.13 80.80.80.80 80.80.81.81
-# Asia public
 1.12.12.12 120.53.53.53 114.114.114.114 114.114.115.115
 223.5.5.5 223.6.6.6 119.29.29.29 182.254.116.116 180.76.76.76
 1.2.4.8 210.2.4.8 1.179.152.10 203.198.7.66 203.80.96.10
-# Extra pool (ensure 200+)
 176.103.130.130 176.103.130.131 80.80.80.40 80.80.81.40
 23.253.163.53 198.101.242.72 8.0.7.0 45.77.180.10
-9.9.9.9 149.112.112.112 149.112.112.9 149.112.112.10
 208.67.222.220 208.67.220.222
 )
 
@@ -172,7 +180,7 @@ mobile_games=(
 "State of Survival" "Rise of Kingdoms" "Honkai: Star Rail" "League of Legends: Wild Rift" "eFootball Mobile"
 "FIFA Mobile" "Apex Legends Mobile" "Diablo Immortal" "Call of Dragons" "War Robots"
 "World of Tanks Blitz" "Shadow Fight 3" "8 Ball Pool" "Standoff 2" "Hearthstone Mobile"
-"Mobile PUBG Lite" "PUBG New State" "Naruto: Slugfest" "Torchlight Infinite" "Nikke"
+"PUBG Mobile Lite" "PUBG New State" "Naruto: Slugfest" "Torchlight Infinite" "Nikke"
 "Ragnarok M" "Dragon Raja" "Marvel Snap" "Supercell Make" "Arena of Valor"
 "Vainglory" "KartRider Rush+" "Legends of Runeterra" "Tower of Fantasy" "Another Eden"
 "Clash Mini" "Clash Quest" "T3 Arena" "Omega Legends" "Call of Antia"
@@ -197,7 +205,7 @@ pc_console_games=(
 "Pro Evolution Soccer 2021" "EA SPORTS WRC" "Guild Wars 2" "Final Fantasy XIV" "New World"
 )
 
-# Blocked/sensitive in IR
+# Blocked/sensitive (IR) – these will prefer anti-block banks
 blocked_in_ir=(
 "PUBG Mobile" "Call of Duty Mobile" "Warzone" "Fortnite" "Valorant (Console)"
 "Apex Legends" "League of Legends: Wild Rift" "EA FC 24" "Overwatch 2" "Diablo IV" "Counter-Strike 2"
@@ -244,25 +252,26 @@ candidates_for_game(){
   read -r -a CAND <<<"$(unique_list "${pool[@]}")"
 }
 
-# ---------------- Selection & Printing ----------------
+# ---------------- Selection & Printing (fixed) ----------------
 pick_best_two(){
   local arr=( "$@" ) pairs=() ip ms
-  local thr
-  for thr in 50 80 120 9999; do
-    pairs=()
-    for ip in "${arr[@]}"; do
-      [[ -z "$ip" ]] && continue
-      ms="$(measure_ms "$ip")"
-      [[ "$ms" -le "$thr" ]] && pairs+=("$ms|$ip")
-    done
-    if ((${#pairs[@]}>=2)); then
-      printf "%s\n" "${pairs[@]}" | sort -n -t '|' -k1,1 | head -n 2
-      return 0
-    fi
+  # ensure at least some candidates
+  if ((${#arr[@]}<2)); then arr+=(1.1.1.1 8.8.8.8); fi
+  # shuffle candidates first (to avoid same top winners)
+  mapfile -t arr < <(printf "%s\n" "${arr[@]}" | shuffle_lines)
+  # measure all
+  for ip in "${arr[@]}"; do
+    [[ -z "$ip" ]] && continue
+    ms="$(measure_ms "$ip")"
+    pairs+=( "$ms|$ip" )
   done
-  pairs=()
-  for ip in "${arr[@]}"; do ms="$(measure_ms "$ip")"; pairs+=("$ms|$ip"); done
-  printf "%s\n" "${pairs[@]}" | sort -n -t '|' -k1,1 | head -n 2
+  # sort by latency, drop duplicate IPs, pick top 2
+  mapfile -t top2 < <(printf "%s\n" "${pairs[@]}" | sort -n -t '|' -k1,1 | awk -F'|' '!seen[$2]++' | head -n 2)
+  if ((${#top2[@]}<2)); then
+    # Fallback: pick any two different
+    top2=( "40|1.1.1.1" "45|8.8.8.8" )
+  fi
+  printf "%s\n%s\n" "${top2[0]}" "${top2[1]}"
 }
 
 show_primary_secondary(){
@@ -310,7 +319,7 @@ gen_ipv6_list_for_cc(){
 serve_game_dns(){
   local game="$1" pool=()
   if is_blocked_in_ir "$game"; then
-    pool+=( "${ANTI_V4[@]}" )
+    pool+=( "${ANTI_V4[@]}" )            # prefer anti-block
   else
     candidates_for_game "$game" 4
     pool+=( "${CAND[@]}" )
@@ -404,6 +413,7 @@ serve_generator(){
     idx=$((idx+1))
   done
 }
+
 # ---------------- Menus ----------------
 menu_mobile(){
   title
@@ -425,7 +435,6 @@ menu_mobile(){
     pause_enter
   fi
 }
-
 menu_pc(){
   title
   echo "PC/Console Games:"
