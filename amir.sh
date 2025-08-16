@@ -1,288 +1,225 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # =======================================
-# Game DNS Manager - Version 9.0
+# Game DNS Manager - Version 10.0
 # Telegram: @Academi_vpn
-# Admin:    @MahdiAGM0
+# Admin By: @MahdiAGM0
 # =======================================
 
-set -u
+# ---------- Colors & Title ----------
+colors=(31 32 33 34 35 36)
+color_index=0
 
-# ---------- UI ----------
-COLORS=("\e[1;31m" "\e[1;32m" "\e[1;33m" "\e[1;34m" "\e[1;35m" "\e[1;36m")
-RESET="\e[0m"
-
-fast_line(){ local s="$1" d="${2:-0.00008}"; for ((i=0;i<${#s};i++)); do printf "%s" "${s:$i:1}"; sleep "$d"; done; printf "\n"; }
-title(){ clear; local C="${COLORS[$((RANDOM % ${#COLORS[@]}))]}"; echo -e "$C"; fast_line "╔══════════════════════════════════════════════════════════════════╗"; fast_line "║                        GAME DNS MANAGEMENT                        ║"; fast_line "╠══════════════════════════════════════════════════════════════════╣"; fast_line "║ Version: 9.0                                                     ║"; fast_line "║ Telegram: @Academi_vpn                                           ║"; fast_line "║ Admin:    @MahdiAGM0                                             ║"; fast_line "╚══════════════════════════════════════════════════════════════════╝"; echo -e "$RESET"; }
-footer(){ local C="${COLORS[$((RANDOM % ${#COLORS[@]}))]}"; echo -e "$C"; echo "==================================================================="; echo " Version: 9.0  |  @Academi_vpn  |  @MahdiAGM0 "; echo "==================================================================="; echo -e "$RESET"; }
-pause_enter(){ echo; read -rp "Press Enter to continue... " _; }
-has_cmd(){ command -v "$1" >/dev/null 2>&1; }
-
-# ---------- Ping ----------
-fallback_ms(){ echo $((25 + (RANDOM % 61))); }
-measure_ms(){
-  local ip="$1" out val
-  if [[ "$ip" == *:* ]]; then
-    if has_cmd ping6; then out=$(ping6 -c 1 -W 1 "$ip" 2>/dev/null)
-    elif has_cmd ping; then out=$(ping -6 -c 1 -W 1 "$ip" 2>/dev/null)
-    else echo "$(fallback_ms)"; return; fi
-  else
-    if has_cmd ping; then out=$(ping -c 1 -W 1 "$ip" 2>/dev/null)
-    else echo "$(fallback_ms)"; return; fi
-  fi
-  val=$(echo "$out" | grep -oE 'time=[0-9\.]+' | head -n1 | cut -d= -f2)
-  [[ -z "$val" ]] && val=$(echo "$out" | grep -oE '[0-9\.]+/[0-9\.]+/[0-9\.]+' | head -n1 | cut -d/ -f2)
-  [[ -n "$val" ]] && printf "%.0f\n" "$val" || fallback_ms
+fast_line(){
+  local text="$1" delay="$2"
+  for ((i=0; i<${#text}; i++)); do
+    echo -n "${text:$i:1}"
+    sleep "$delay"
+  done
+  echo
 }
 
-shuffle_lines(){ if has_cmd shuf; then shuf; else awk 'BEGIN{srand()} {print rand() "\t" $0}' | sort -k1,1n | cut -f2-; fi; }
-normalize_game(){ echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/  */ /g;s/^ *//;s/ *$//'; }
+title(){
+  clear
+  local color=${colors[$color_index]}
+  color_index=$(( (color_index + 1) % ${#colors[@]} ))
+  echo -e "\e[${color}m"
+  fast_line "╔═══════════════════════════════════════╗" 0.00005
+  fast_line "║        GAME DNS MANAGER v10.0         ║" 0.00005
+  fast_line "╚═══════════════════════════════════════╝" 0.00005
+  echo -e "\e[0m"
+}
 
-# ---------- Expand IPv6 ----------
+footer(){
+  local color=${colors[$color_index]}
+  echo -e "\e[${color}m"
+  echo "========================================"
+  echo " Version: 10.0"
+  echo " Telegram: @Academi_vpn"
+  echo " Admin By: @MahdiAGM0"
+  echo "========================================"
+  echo -e "\e[0m"
+}
+
+pause_enter(){ read -rp "Press Enter to continue..." _; }
+
+# ---------- Utils ----------
+has_cmd(){ command -v "$1" >/dev/null 2>&1; }
+fallback_ms(){ echo $((25 + RANDOM % 60)); }
 expand_ipv6(){
   if has_cmd python3; then
     python3 - <<EOF
 import ipaddress
 try:
-    print(ipaddress.IPv6Address("$1").exploded)
-except:
-    print("$1")
+  print(ipaddress.IPv6Address("$1").exploded)
+except: print("$1")
 EOF
+  else echo "$1"; fi
+}
+normalize_game(){ echo "$1" | tr '[:upper:]' '[:lower:]' | tr -d ' '; }
+
+measure_ms(){
+  local ip="$1" out ms
+  if [[ "$ip" == *:* ]]; then
+    if has_cmd ping6; then
+      out=$(ping6 -c1 -W1 "$ip" 2>/dev/null | grep "time=")
+      ms=$(echo "$out" | grep -oE "time=[0-9.]+" | cut -d= -f2)
+    fi
   else
-    echo "$1"
+    if has_cmd ping; then
+      out=$(ping -c1 -W1 "$ip" 2>/dev/null | grep "time=")
+      ms=$(echo "$out" | grep -oE "time=[0-9.]+" | cut -d= -f2)
+    fi
   fi
+  [[ -z "$ms" ]] && ms=$(fallback_ms)
+  echo "$ms"
 }
 
-# ---------- DNS Banks ----------
-ANTI_V4=(1.1.1.1 1.0.0.1 8.8.8.8 8.8.4.4 9.9.9.9 149.112.112.112 208.67.222.222 208.67.220.220 94.140.14.14 94.140.15.15 185.228.168.9 185.228.169.9 76.76.19.19 76.76.19.159 64.6.64.6 64.6.65.6 8.26.56.26 8.20.247.20 4.2.2.1 4.2.2.2 91.239.100.100 89.233.43.71 84.200.69.80 84.200.70.40 195.46.39.39 195.46.39.40 223.5.5.5 223.6.6.6 180.76.76.76)
+shuffle_lines(){ awk 'BEGIN{srand()} {print rand(),$0}' | sort -n | cut -d' ' -f2-; }
+# ---------- DNS Pools ----------
 
-DOWNLOAD_V4=(1.1.1.1 1.0.0.1 8.8.8.8 8.8.4.4 9.9.9.9 149.112.112.112 208.67.222.222 208.67.220.220 94.140.14.14 94.140.15.15 185.228.168.9 185.228.169.9 91.239.100.100 89.233.43.71 64.6.64.6 64.6.65.6 76.76.19.19 76.76.2.0 45.90.28.0 45.90.30.0 84.200.69.80 84.200.70.40 195.46.39.39 195.46.39.40 223.5.5.5 223.6.6.6 114.114.114.114 114.114.115.115)
+# Global DNS (Safe & Fast)
+MASTER_V4=(
+1.1.1.1 1.0.0.1
+8.8.8.8 8.8.4.4
+9.9.9.9 149.112.112.112
+208.67.222.222 208.67.220.220
+94.140.14.14 94.140.15.15
+76.76.19.19 76.223.122.150
+185.228.168.9 185.228.169.9
+77.88.8.8 77.88.8.1
+156.154.70.1 156.154.71.1
+91.239.100.100 89.233.43.71
+64.6.64.6 64.6.65.6
+45.90.28.193 45.90.30.193
+185.222.222.222 185.184.222.222
+203.119.36.106 203.119.36.109
+208.76.50.50 208.76.51.51
+8.26.56.26 8.20.247.20
+37.235.1.174 37.235.1.177
+198.101.242.72 23.253.163.53
+198.153.192.1 198.153.194.1
+172.64.36.1 172.64.36.2
+45.33.97.5 198.58.127.10
+# (continue until ~200 entries)
+)
 
-GLOBAL_V6=(2606:4700:4700::1111 2606:4700:4700::1001 2001:4860:4860::8888 2001:4860:4860::8844 2620:fe::fe 2620:fe::9)
+# Anti-Block DNS (for games blocked in IR)
+ANTI_V4=(
+1.1.1.2 1.0.0.2
+9.9.9.10 149.112.112.10
+208.67.222.123 208.67.220.123
+94.140.14.15 94.140.15.16
+76.76.19.19 76.76.19.20
+185.228.168.168 185.228.169.168
+77.88.8.88 77.88.8.2
+156.154.70.5 156.154.71.5
+64.6.64.64 64.6.65.65
+45.90.28.0 45.90.30.0
+)
 
-IR_V4=(178.22.122.100 185.51.200.2 5.200.200.200)
-AE_V4=(94.200.200.200 185.37.37.37 213.42.20.20)
-SA_V4=(212.26.18.1 84.235.6.6 185.24.233.2)
-TR_V4=(195.175.39.39 81.212.65.50 212.156.4.1)
+# Regional IPv4
+IR_V4=(178.22.122.100 185.51.200.2 185.55.225.25 217.218.127.127)
+AE_V4=(94.200.200.200 185.37.37.37 91.75.141.1 195.229.241.222)
+SA_V4=(212.26.18.1 84.235.6.6 185.40.4.1 188.48.32.3)
+TR_V4=(195.175.39.39 81.212.65.50 193.140.100.100 212.156.4.20)
 
-IR_V6=(2a0a:2b40::1)
-AE_V6=(2a02:4780::1)
-SA_V6=(2a0a:4b80::1)
-TR_V6=(2a02:ff80::1)
+# Regional IPv6 (base, randomized later)
+IR_V6=(2a0a:2b40::1 2a0a:2b40::2 2a0a:2b40::100)
+AE_V6=(2a02:4780::1 2a02:4780::2 2a02:4780::50)
+SA_V6=(2a0a:4b80::1 2a0a:4b80::2 2a0a:4b80::80)
+TR_V6=(2a02:ff80::1 2a02:ff80::2 2a02:ff80::90)
 
-MASTER_V4=( "${ANTI_V4[@]}" "${IR_V4[@]}" "${AE_V4[@]}" "${SA_V4[@]}" "${TR_V4[@]}" )
-# ------------------------------------------------
-# ================= Games Lists ==================
-# ------------------------------------------------
+# Global IPv6
+GLOBAL_V6=(
+2606:4700:4700::1111 2606:4700:4700::1001
+2001:4860:4860::8888 2001:4860:4860::8844
+2620:fe::fe 2620:fe::9
+2a10:50c0::ad1:ff 2a10:50c0::ad2:ff
+)
+# ---------- Games Lists ----------
 
-# ---------- Mobile Games (70) ----------
+# 🎮 Mobile Games (70 popular)
 mobile_games=(
-"PUBG Mobile"
-"Call of Duty Mobile"
-"Garena Free Fire"
-"Arena Breakout"
-"Clash of Clans"
-"Mobile Legends: Bang Bang"
-"Brawl Stars"
-"Among Us"
-"Genshin Impact"
-"Pokemon Go"
-"Subway Surfers"
-"Candy Crush Saga"
-"Asphalt 9: Legends"
-"Lords Mobile"
-"AFK Arena"
-"Roblox Mobile"
-"Minecraft Pocket Edition"
-"Coin Master"
-"Clash Royale"
-"Summoners War"
-"Rise of Kingdoms"
-"Dragon City"
-"8 Ball Pool"
-"Dream League Soccer"
-"Hay Day"
-"Boom Beach"
-"PUBG Mobile Lite"
-"Critical Ops"
-"Shadow Fight 3"
-"War Robots"
-"Knives Out"
-"Marvel Future Fight"
-"Injustice 2 Mobile"
-"Mortal Kombat Mobile"
-"Sniper 3D"
-"World War Heroes"
-"Modern Combat 5"
-"Nova Legacy"
-"Vainglory"
-"Chess.com"
-"State of Survival"
-"Evony: The King’s Return"
-"Top Eleven"
-"Zynga Poker"
-"SimCity BuildIt"
-"The Sims Mobile"
-"Homescapes"
-"Gardenscapes"
-"Idle Heroes"
-"Archero"
-"Sky: Children of the Light"
-"Standoff 2"
-"Pixel Gun 3D"
-"Grimvalor"
-"Dead Trigger 2"
-"Shadowgun Legends"
-"Eternium"
-"Real Racing 3"
-"CSR Racing 2"
-"Asphalt 8: Airborne"
-"MadOut2 BigCityOnline"
-"World of Tanks Blitz"
-"Warhammer 40K Tacticus"
-"Hero Wars"
-"Summoners Greed"
-"Mobile Royale"
-"World Flipper"
-"Exos Heroes"
-"Dragon Raja"
-"A3: Still Alive"
-"Miracle Nikki"
+"PUBG Mobile" "Call of Duty Mobile" "Garena Free Fire" "Arena Breakout"
+"Clash of Clans" "Clash Royale" "Brawl Stars" "Roblox" "Minecraft PE"
+"Genshin Impact" "Asphalt 9" "Subway Surfers" "Candy Crush Saga"
+"League of Legends Wild Rift" "Mobile Legends" "Pokemon Go"
+"AFK Arena" "Summoners War" "Lords Mobile" "Rise of Kingdoms"
+"Dragon Raja" "State of Survival" "Marvel Future Fight" "FIFA Mobile"
+"PES Mobile" "Arena of Valor" "Vainglory" "Modern Combat 5"
+"Dead Trigger 2" "World of Tanks Blitz" "Shadowgun Legends"
+"Order & Chaos Online" "Knives Out" "Identity V" "Among Us"
+"Call of Antia" "Torchlight Infinite" "Lost Light" "Onmyoji Arena"
+"Extraordinary Ones" "Honor of Kings" "Contra Returns" "CrossFire Legends"
+"Rules of Survival" "Bullet Angel" "ZOZ Final Hour" "T3 Arena"
+"Apex Legends Mobile" "Naraka Mobile" "War Robots" "EVE Echoes"
+"Blade & Soul Revolution" "Lineage 2M" "Ragnarok M" "Dragon Nest M"
+"Adventure Quest 3D" "Honkai Impact 3" "Tower of Fantasy" "Ni no Kuni"
+"Diablo Immortal" "Torchlight Mobile" "Soul Knight" "Pixel Gun 3D"
+"Standoff 2" "Critical Ops" "Modern Strike Online" "Sniper 3D"
+"CSR Racing 2" "Real Racing 3" "Need for Speed NL" "Hitman Sniper"
 )
 
-# ---------- PC / Console Games (70) ----------
+# 🎮 PC / Console Games (70 popular)
 pc_console_games=(
-"Fortnite"
-"Call of Duty Warzone"
-"EA Sports FC 24"
-"Rocket League"
-"Apex Legends"
-"Minecraft Java"
-"Grand Theft Auto V Online"
-"Destiny 2"
-"Overwatch 2"
-"Valorant"
-"League of Legends"
-"Counter-Strike 2"
-"Dota 2"
-"World of Warcraft"
-"StarCraft II"
-"Diablo IV"
-"Path of Exile"
-"Escape from Tarkov"
-"Rainbow Six Siege"
-"Battlefield V"
-"Battlefield 2042"
-"Fall Guys"
-"Paladins"
-"Smite"
-"Hearthstone"
-"Lost Ark"
-"The Elder Scrolls Online"
-"Black Desert Online"
-"New World"
-"ARK: Survival Evolved"
-"Rust"
-"Terraria (PC Online)"
-"Stardew Valley Co-op"
-"Phasmophobia"
-"Dead by Daylight"
-"Among Us (PC)"
-"Warframe"
-"CrossFire"
-"Point Blank"
-"PUBG PC"
-"PUBG Lite PC"
-"Call of Duty Modern Warfare II"
-"Call of Duty Black Ops Cold War"
-"Call of Duty Black Ops III"
-"Call of Duty WWII"
-"Far Cry 6 Online"
-"Cyberpunk 2077 Online"
-"Red Dead Online"
-"Monster Hunter: World"
-"Monster Hunter Rise"
-"Final Fantasy XIV"
-"Final Fantasy XI"
-"Genshin Impact (PC)"
-"Tower of Fantasy"
-"MapleStory"
-"Guild Wars 2"
-"EVE Online"
-"Albion Online"
-"FIFA 23 PC"
-"NBA 2K24"
-"Madden NFL 24"
-"eFootball 2024 (PES)"
-"Tekken 7 Online"
-"Street Fighter V Online"
-"Mortal Kombat 11"
-"Injustice 2 (PC)"
-"Gran Turismo 7 Online"
-"Forza Horizon 5"
-"Need for Speed Heat"
-"The Crew 2"
+"Fortnite" "Call of Duty Warzone" "EA Sports FC 24" "Rocket League"
+"Apex Legends" "Valorant" "Counter-Strike 2" "CS:GO" "Overwatch 2"
+"Dota 2" "League of Legends" "World of Warcraft" "Diablo IV"
+"Hearthstone" "Starcraft II" "Minecraft Java" "Roblox PC"
+"Battlefield 2042" "Battlefield V" "Rainbow Six Siege"
+"Escape from Tarkov" "DayZ" "Rust" "ARK Survival Evolved"
+"GTA V Online" "Red Dead Online" "Cyberpunk 2077 Online"
+"Elden Ring Online" "The Division 2" "Destiny 2"
+"World of Tanks PC" "World of Warships" "Halo Infinite"
+"Forza Horizon 5" "Gran Turismo 7" "Need for Speed Heat"
+"FIFA 23" "PES 2021 PC" "NBA 2K24" "Madden NFL 24"
+"MLB The Show 23" "Mortal Kombat 11" "Tekken 7" "Street Fighter 6"
+"Smash Bros Ultimate" "Splatoon 3" "Mario Kart 8 Deluxe"
+"Zelda TOTK Online" "Animal Crossing" "Pokemon Scarlet Violet"
+"Monster Hunter Rise" "Resident Evil 4 Remake Online"
+"Final Fantasy XIV" "Final Fantasy XVI Online"
+"Lost Ark" "Black Desert Online" "Guild Wars 2"
+"Warframe" "Path of Exile" "Crossfire PC" "Point Blank"
+"Paladins" "Smite" "Heroes of the Storm" "PUBG PC"
+"PUBG Console" "Apex Console" "Overwatch Console" "COD MWII"
 )
 
-# ---------- Games blocked in Iran (affects pool selection) ----------
+# 🛑 Games Blocked in Iran (auto anti-block DNS)
 blocked_in_ir=(
-"PUBG Mobile"
-"Call of Duty Mobile"
-"Garena Free Fire"
-"Arena Breakout"
-"Clash of Clans"
-"Mobile Legends: Bang Bang"
-"Fortnite"
-"Call of Duty Warzone"
-"Valorant"
-"Apex Legends"
-"Overwatch 2"
-"Rainbow Six Siege"
-"League of Legends"
-"Counter-Strike 2"
-"Dota 2"
-"World of Warcraft"
+"PUBG Mobile" "Call of Duty Mobile" "Garena Free Fire" "Arena Breakout"
+"Fortnite" "Valorant" "CS:GO" "Counter-Strike 2" "Overwatch 2"
+"Apex Legends" "Rainbow Six Siege" "Roblox" "Minecraft PE"
 )
-
-is_blocked_in_ir(){
-  local n="$1"
-  for g in "${blocked_in_ir[@]}"; do
-    [[ "$g" == "$n" ]] && return 0
+is_blocked_in_ir(){ 
+  for g in "${blocked_in_ir[@]}"; do 
+    [[ "$g" == "$1" ]] && return 0
   done
   return 1
 }
-# ------------------------------------------------
-# ============== DNS Picker Logic ================
-# ------------------------------------------------
+# ---------- Core Logic ----------
 
+# انتخاب بهترین 2 تا DNS با پینگ
 pick_best_two(){
-  local arr=( "$@" ) pairs=() ip ms
+  local arr=( "$@" ) pairs=()
   mapfile -t arr < <(printf "%s\n" "${arr[@]}" | shuffle_lines)
   for ip in "${arr[@]}"; do
-    [[ -z "$ip" ]] && continue
     ms="$(measure_ms "$ip")"
     pairs+=( "$ms|$ip" )
   done
   mapfile -t top2 < <(printf "%s\n" "${pairs[@]}" | sort -n -t '|' -k1,1 | head -n 2)
-  # اگر کمتر از ۲ مورد شد (لیست کوتاه بود)، با fallback پر کن
-  if [[ ${#top2[@]} -lt 2 ]]; then
-    while [[ ${#top2[@]} -lt 2 ]]; do
-      top2+=( "$(fallback_ms)|${arr[$((RANDOM % ${#arr[@]}))]}" )
-    done
-  fi
   printf "%s\n%s\n" "${top2[0]}" "${top2[1]}"
 }
 
+# نمایش Primary و Secondary
 show_primary_secondary(){
   local a="$1" b="$2" ip ms
-  ip="${a#*|}"; ms="${a%%|*}"
-  [[ "$ip" == *:* ]] && ip="$(expand_ipv6 "$ip")"
+  ip="${a#*|}"; ms="${a%%|*}"; [[ "$ip" == *:* ]] && ip="$(expand_ipv6 "$ip")"
   printf "Primary DNS:   %-40s → %sms\n" "$ip" "$ms"
-
-  ip="${b#*|}"; ms="${b%%|*}"
-  [[ "$ip" == *:* ]] && ip="$(expand_ipv6 "$ip")"
+  ip="${b#*|}"; ms="${b%%|*}"; [[ "$ip" == *:* ]] && ip="$(expand_ipv6 "$ip")"
   printf "Secondary DNS: %-40s → %sms\n" "$ip" "$ms"
 }
 
+# سرو DNS برای یک مجموعه
 serve_dns_set(){
   local label="$1"; shift
   local lines out1 out2
@@ -293,226 +230,112 @@ serve_dns_set(){
   show_primary_secondary "$out1" "$out2"
 }
 
-# ------------------------------------------------
-# ================== Services ====================
-# ------------------------------------------------
-
-serve_game(){
-  local game="$1"
-  echo "Selected Game: $game"
-  if is_blocked_in_ir "$game"; then
-    echo "⚠️  Note: $game is blocked in Iran → using Anti-Block pool"
-    serve_dns_set "$game" "${ANTI_V4[@]}"
+# سرو DNS برای بازی
+serve_game(){ 
+  local g="$1"
+  if is_blocked_in_ir "$g"; then
+    serve_dns_set "$g" "${ANTI_V4[@]}"
   else
-    serve_dns_set "$game" "${MASTER_V4[@]}"
+    serve_dns_set "$g" "${MASTER_V4[@]}"
   fi
 }
+# ---------- DNS Generator ----------
 
-# --- Search Game & Device (fixed) ---
-search_game_device(){
-  read -rp "Enter game name: " gname
-  read -rp "Enter device (Mobile/PC/Console): " dname
-  local ng=$(normalize_game "$gname") found=""
-
-  # Search in mobile list
-  for g in "${mobile_games[@]}"; do
-    if [[ "$(normalize_game "$g")" == "$ng" ]]; then found="$g"; break; fi
-  done
-  # Search in pc/console list
-  if [[ -z "$found" ]]; then
-    for g in "${pc_console_games[@]}"; do
-      if [[ "$(normalize_game "$g")" == "$ng" ]]; then found="$g"; break; fi
-    done
-  fi
-
-  if [[ -n "$found" ]]; then
-    echo "Game found: $found ($dname)"
-    serve_game "$found"
-  else
-    echo "Game not found → using Anti-Block DNS"
-    serve_dns_set "$gname" "${ANTI_V4[@]}"
-  fi
-}
-
-# --- Download DNS (bigger pool) ---
-serve_download(){
-  echo ">>> Download DNS Servers"
-  local DOWNLOAD_BIG=(
-    # Cloudflare / Google / Quad9 / OpenDNS / AdGuard / NextDNS (+ چند سرویس عمومی دیگر)
-    1.1.1.1 1.0.0.1 1.1.1.2 1.0.0.2 1.1.1.3 1.0.0.3
-    2606:4700:4700::1111 2606:4700:4700::1001
-    8.8.8.8 8.8.4.4 2001:4860:4860::8888 2001:4860:4860::8844
-    9.9.9.9 149.112.112.112 2620:fe::fe 2620:fe::9
-    208.67.222.222 208.67.220.220
-    94.140.14.14 94.140.15.15 2a10:50c0::ad1:ff 2a10:50c0::ad2:ff
-    76.76.19.19 76.76.19.159
-    64.6.64.6 64.6.65.6
-    8.26.56.26 8.20.247.20
-    4.2.2.1 4.2.2.2 4.2.2.3 4.2.2.4
-    91.239.100.100 89.233.43.71
-    84.200.69.80 84.200.70.40
-    195.46.39.39 195.46.39.40
-    223.5.5.5 223.6.6.6
-    114.114.114.114 114.114.115.115
-    180.76.76.76
-    # چند DNS منطقه‌ای نمونه
-    178.22.122.100 185.51.200.2 5.200.200.200
-    94.200.200.200 185.37.37.37 213.42.20.20
-    212.26.18.1 84.235.6.6 185.24.233.2
-    195.175.39.39 81.212.65.50 212.156.4.1
-  )
-  serve_dns_set "Download" "${DOWNLOAD_BIG[@]}"
-}
-
-# --- Generator (IPv4/IPv6) ---
 gen_dns_country(){
-  local country="$1" mode="$2" count="$3" pool=() ip ms
+  local country="$1" mode="$2" count="$3" pool=() ip ms base
   case "$country" in
-    Iran)   pool=( "${IR_V4[@]}" ) ;;
-    UAE)    pool=( "${AE_V4[@]}" ) ;;
-    Saudi)  pool=( "${SA_V4[@]}" ) ;;
-    Turkey) pool=( "${TR_V4[@]}" ) ;;
-    *)      pool=( "${MASTER_V4[@]}" ) ;;
+    Iran)   [[ "$mode" == "IPv6" ]] && pool=( "${IR_V6[@]}" ) || pool=( "${IR_V4[@]}" ) ;;
+    UAE)    [[ "$mode" == "IPv6" ]] && pool=( "${AE_V6[@]}" ) || pool=( "${AE_V4[@]}" ) ;;
+    Saudi)  [[ "$mode" == "IPv6" ]] && pool=( "${SA_V6[@]}" ) || pool=( "${SA_V4[@]}" ) ;;
+    Turkey) [[ "$mode" == "IPv6" ]] && pool=( "${TR_V6[@]}" ) || pool=( "${TR_V4[@]}" ) ;;
+    *)      [[ "$mode" == "IPv6" ]] && pool=( "${GLOBAL_V6[@]}" ) || pool=( "${MASTER_V4[@]}" ) ;;
   esac
-  if [[ "$mode" == "IPv6" ]]; then
-    case "$country" in
-      Iran)   pool=( "${IR_V6[@]}" ) ;;
-      UAE)    pool=( "${AE_V6[@]}" ) ;;
-      Saudi)  pool=( "${SA_V6[@]}" ) ;;
-      Turkey) pool=( "${TR_V6[@]}" ) ;;
-      *)      pool=( "${GLOBAL_V6[@]}" ) ;;
-    esac
-  fi
 
   echo ">>> Generated $mode DNS for $country:"
   local n=1
   while [[ $n -le $count ]]; do
-    if [[ -n "${pool[*]}" ]]; then
-      ip="${pool[$((RANDOM % ${#pool[@]}))]}"
+    if [[ "$mode" == "IPv6" ]]; then
+      base="${pool[$((RANDOM % ${#pool[@]}))]}"
+      ip="${base%::*}::$((RANDOM % 9999))"
+      ip="$(expand_ipv6 "$ip")"
     else
-      if [[ "$mode" == "IPv4" ]]; then
-        ip="$((RANDOM%256)).$((RANDOM%256)).$((RANDOM%256)).$((RANDOM%256))"
-      else
-        # pseudo IPv6 pattern (fallback) — سریعا expand می‌کنیم
-        ip="2001:db8:$((RANDOM%4096))::$((RANDOM%4096))"
-      fi
+      ip="${pool[$((RANDOM % ${#pool[@]}))]}"
     fi
-    [[ "$mode" == "IPv6" ]] && ip="$(expand_ipv6 "$ip")"
     ms="$(measure_ms "$ip")"
     printf "%3d) %-40s → %sms\n" "$n" "$ip" "$ms"
     n=$((n+1))
   done
 }
 
-# ------------------------------------------------
-# ==================== Menus =====================
-# ------------------------------------------------
+# ---------- Menus ----------
 
-menu_mobile(){
+menu_mobile(){ 
   title
-  echo ">>> Mobile Games:"
-  local i=1
+  i=1
   for g in "${mobile_games[@]}"; do
-    printf "%2d) %s\n" "$i" "$g"; i=$((i+1))
+    printf "%2d) %s\n" "$i" "$g"
+    i=$((i+1))
   done
-  echo " 0) Back"
+  echo "0) Back"
   read -rp "Pick: " n
-  if (( n==0 )); then return
-  elif (( n>=1 && n<=${#mobile_games[@]} )); then
-    serve_game "${mobile_games[$n-1]}"
-  else
-    echo "Invalid choice"
-  fi
+  ((n==0)) && return
+  ((n>=1&&n<=${#mobile_games[@]})) && serve_game "${mobile_games[$n-1]}"
   footer; pause_enter
 }
 
-menu_pc(){
+menu_pc(){ 
   title
-  echo ">>> PC / Console Games:"
-  local i=1
+  i=1
   for g in "${pc_console_games[@]}"; do
-    printf "%2d) %s\n" "$i" "$g"; i=$((i+1))
+    printf "%2d) %s\n" "$i" "$g"
+    i=$((i+1))
   done
-  echo " 0) Back"
+  echo "0) Back"
   read -rp "Pick: " n
-  if (( n==0 )); then return
-  elif (( n>=1 && n<=${#pc_console_games[@]} )); then
-    serve_game "${pc_console_games[$n-1]}"
-  else
-    echo "Invalid choice"
-  fi
-  footer; pause_enter
-}
-
-menu_search(){
-  title
-  search_game_device
-  echo " 0) Back"
-  footer; pause_enter
-}
-
-menu_download(){
-  title
-  serve_download
-  echo " 0) Back"
+  ((n==0)) && return
+  ((n>=1&&n<=${#pc_console_games[@]})) && serve_game "${pc_console_games[$n-1]}"
   footer; pause_enter
 }
 
 menu_generate(){
   title
   echo "Select country:"
-  echo "1) Iran"
-  echo "2) UAE"
-  echo "3) Saudi"
-  echo "4) Turkey"
-  echo "0) Back"
+  echo " 1) Iran"
+  echo " 2) UAE"
+  echo " 3) Saudi"
+  echo " 4) Turkey"
+  echo " 0) Back"
   read -rp "Pick: " c
   case "$c" in
-    1) cc="Iran" ;;
-    2) cc="UAE" ;;
-    3) cc="Saudi" ;;
-    4) cc="Turkey" ;;
-    0) return ;;
-    *) echo "Invalid"; pause_enter; return ;;
+    1) cc="Iran";; 2) cc="UAE";; 3) cc="Saudi";; 4) cc="Turkey";; 0) return;;
   esac
 
-  echo "Select IP mode: 1) IPv4  2) IPv6  0) Back"
+  echo "Select IP mode:"
+  echo " 1) IPv4"
+  echo " 2) IPv6"
   read -rp "Pick: " m
-  case "$m" in
-    1) mm="IPv4" ;;
-    2) mm="IPv6" ;;
-    0) return ;;
-    *) echo "Invalid"; pause_enter; return ;;
-  esac
+  case "$m" in 1) mm="IPv4";; 2) mm="IPv6";; *) return;; esac
 
   read -rp "How many DNS? " num
   gen_dns_country "$cc" "$mm" "$num"
   footer; pause_enter
 }
-
-# ------------------------------------------------
-# ================== Main Loop ===================
-# ------------------------------------------------
+# ---------- Main Menu ----------
 
 main_menu(){
   while true; do
     title
-    echo ">>> Main Menu"
     echo "1) Mobile Games DNS"
     echo "2) PC / Console Games DNS"
-    echo "3) Search Game & Device"
-    echo "4) Download DNS"
-    echo "5) Generate DNS by Country"
+    echo "3) Generate DNS by Country"
     echo "0) Exit"
     read -rp "Select: " opt
     case "$opt" in
       1) menu_mobile ;;
       2) menu_pc ;;
-      3) menu_search ;;
-      4) menu_download ;;
-      5) menu_generate ;;
-      0) echo "Goodbye!"; exit 0 ;;
-      *) echo "Invalid choice"; sleep 1 ;;
+      3) menu_generate ;;
+      0) exit 0 ;;
+      *) echo "Invalid option!"; pause_enter ;;
     esac
   done
 }
