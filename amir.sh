@@ -1,24 +1,38 @@
 #!/bin/bash
-# =======================================
-# Game DNS Manager - Version 4.1.0
-# Telegram: @Academi_vpn
-# Admin By: @MahdiAGM0
-# =======================================
 
-# ---------- COLORS & TITLE ----------
-colors=(31 32 33 34 35 36) # Red, Green, Yellow, Blue, Magenta, Cyan
-color_index=0
+# =========================
+# Colors
+# =========================
+RED="\033[1;31m"
+GREEN="\033[1;32m"
+YELLOW="\033[1;33m"
+BLUE="\033[1;34m"
+MAGENTA="\033[1;35m"
+CYAN="\033[1;36m"
+WHITE="\033[1;37m"
+RESET="\033[0m"
 
+COLORS=("$RED" "$GREEN" "$YELLOW" "$BLUE" "$MAGENTA" "$CYAN" "$WHITE")
+
+# =========================
+# Title (animated header)
+# =========================
 title() {
-  local color=${colors[$color_index]}
-  color_index=$(( (color_index + 1) % ${#colors[@]} ))
-  echo -e "\e[${color}m"
-  echo "========================================"
-  echo " Version: 4.1.0"
-  echo " Telegram: @Academi_vpn"
-  echo " Admin By: @MahdiAGM0"
-  echo "========================================"
-  echo -e "\e[0m"
+  clear
+  local color=${COLORS[$((RANDOM % ${#COLORS[@]}))]}
+  echo -e "${color}========================================${RESET}"
+  echo -e "${color}             Gamer DNS Tool             ${RESET}"
+  echo -e "${color}========================================${RESET}"
+  echo -e "   Version: 5.0.0"
+  echo -e "   Telegram: @Academi_vpn"
+  echo -e "   Admin By: @MahdiAGM0"
+  echo -e "${color}========================================${RESET}"
+  echo
+}
+
+print_footer() {
+  echo
+  echo -e "${CYAN}========================================${RESET}"
 }
 
 pause_enter() {
@@ -26,427 +40,413 @@ pause_enter() {
   read -rp "Press Enter to continue..."
 }
 
-print_footer() {
-  title
-}
-
-# ---------- DNS Picker & Ping ----------
-serve_dns_set() {
-  local -n arr=$1   # nameref
-  local count=${#arr[@]}
-  if (( count < 2 )); then
-    echo "Not enough DNS entries in $1"
-    return 1
+# =========================
+# Check & ensure ping exists
+# =========================
+ensure_ping() {
+  if ! command -v ping &>/dev/null; then
+    echo "Installing 'ping' package..."
+    if command -v apt &>/dev/null; then
+      sudo apt update && sudo apt install -y iputils-ping
+    elif command -v yum &>/dev/null; then
+      sudo yum install -y iputils
+    else
+      echo "Please install ping manually."
+      exit 1
+    fi
   fi
-  local i1=$((RANDOM % count))
-  local i2=$((RANDOM % count))
-  while [[ $i2 -eq $i1 ]]; do
-    i2=$((RANDOM % count))
-  done
-  local d1=${arr[$i1]}
-  local d2=${arr[$i2]}
-  local p1=$(ping -c1 -W1 "$d1" 2>/dev/null | grep 'time=' | awk -F'time=' '{print $2}' | awk '{print $1}')
-  local p2=$(ping -c1 -W1 "$d2" 2>/dev/null | grep 'time=' | awk -F'time=' '{print $2}' | awk '{print $1}')
-  [[ -z "$p1" ]] && p1="timeout" || p1="${p1} ms"
-  [[ -z "$p2" ]] && p2="timeout" || p2="${p2} ms"
-  echo "Primary DNS:   $d1    → $p1"
-  echo "Secondary DNS: $d2    → $p2"
-}
-# ---------- PART 2: COUNTRY DNS BANKS ----------
-
-# helper: expand a /24 range (same first 3 octets)
-expand_range() {
-  local start=$1 end=$2
-  local base=$(echo "$start" | cut -d. -f1-3)
-  local s=$(echo "$start" | cut -d. -f4)
-  local e=$(echo "$end"   | cut -d. -f4)
-  for ((i=s; i<=e; i++)); do
-    echo "$base.$i"
-  done
 }
 
-# ---- IRAN (>=300) ----
-IRAN_DNS=(
-  # 5.160.0.0/24
-  $(expand_range "5.160.0.1" "5.160.0.254")
-  # 5.160.1.0/24
-  $(expand_range "5.160.1.1" "5.160.1.254")
-  # 31.7.64.0/24
-  $(expand_range "31.7.64.1" "31.7.64.254")
-  # 37.255.128.0/24
-  $(expand_range "37.255.128.1" "37.255.128.254")
-  # 79.175.128.0/24
-  $(expand_range "79.175.128.1" "79.175.128.254")
-  # 185.55.224.0/24
-  $(expand_range "185.55.224.1" "185.55.224.254")
-  # 185.120.221.0/24
-  $(expand_range "185.120.221.1" "185.120.221.254")
+# =========================
+# Ping DNS and return latency
+# =========================
+ping_dns() {
+  local ip=$1
+  local res
+  res=$(ping -c 1 -W 1 "$ip" 2>/dev/null | grep "time=" | sed -E 's/.*time=([0-9.]+).*/\1ms/')
+  if [[ -z "$res" ]]; then
+    echo "timeout"
+  else
+    echo "$res"
+  fi
+}
+# =========================
+# Mobile Game DNS (200)
+# =========================
+MOBILE_DNS=(
+"1.1.1.1" "1.0.0.1" "8.8.8.8" "8.8.4.4" "9.9.9.9" "149.112.112.112"
+"208.67.222.222" "208.67.220.220" "94.140.14.14" "94.140.15.15"
+"77.88.8.8" "77.88.8.1" "185.222.222.222" "185.184.222.222"
+"64.6.64.6" "64.6.65.6" "76.76.2.0" "76.76.10.0"
+"156.154.70.1" "156.154.71.1" "45.90.28.193" "45.90.30.193"
+"45.90.28.0" "45.90.30.0" "91.239.100.100" "89.233.43.71"
+"185.228.168.9" "185.228.169.9" "74.82.42.42" "209.244.0.3"
+"209.244.0.4" "216.146.35.35" "216.146.36.36" "8.26.56.26"
+"8.20.247.20" "4.2.2.1" "4.2.2.2" "4.2.2.3" "4.2.2.4"
+"4.2.2.5" "4.2.2.6" "23.253.163.53" "198.101.242.72"
+"64.94.1.1" "165.87.13.129" "204.117.214.10" "151.196.0.37"
+"151.197.0.37" "151.198.0.37" "151.199.0.37" "151.201.0.37"
+"151.202.0.37" "151.203.0.37" "151.204.0.37" "151.205.0.37"
+"205.214.45.10" "199.85.126.10" "198.54.117.10" "165.87.201.244"
+"66.109.229.6" "64.80.255.251" "216.170.153.146" "216.165.129.157"
+"64.233.217.2" "64.233.217.3" "64.233.217.4" "64.233.217.5"
+"64.233.217.6" "64.233.217.7" "64.233.217.8" "74.125.45.2"
+"74.125.45.3" "74.125.45.4" "74.125.45.5" "74.125.45.6"
+"74.125.45.7" "74.125.45.8" "8.34.34.34" "8.35.35.35"
+"203.113.1.9" "203.113.1.10" "61.19.42.5" "61.19.42.6"
+"122.3.0.18" "122.3.0.19" "218.102.23.228" "218.102.23.229"
+"210.0.255.251" "210.0.255.252" "202.44.204.34" "202.44.204.35"
+"203.146.237.222" "203.146.237.223" "210.86.181.20" "210.86.181.21"
+"211.115.67.50" "211.115.67.51" "202.134.0.155" "202.134.0.156"
+"195.46.39.39" "195.46.39.40" "37.235.1.174" "37.235.1.177"
+"185.117.118.20" "185.117.118.21" "176.103.130.130" "176.103.130.131"
+"94.16.114.254" "94.16.114.253" "62.113.113.113" "62.113.113.114"
+"45.33.97.5" "45.33.97.6" "103.86.96.100" "103.86.99.100"
+"202.153.220.42" "202.153.220.43" "198.153.194.40" "198.153.192.1"
+"4.53.7.34" "4.53.7.36" "207.69.188.186" "207.69.188.187"
+"63.171.232.38" "63.171.232.39" "24.29.103.15" "24.29.103.16"
+"98.38.222.125" "98.38.222.126" "50.204.174.58" "50.204.174.59"
+"68.94.156.1" "68.94.157.1" "12.127.17.72" "12.127.17.73"
+"205.171.3.65" "205.171.3.66" "149.112.112.10" "9.9.9.10"
+"209.18.47.61" "209.18.47.62" "12.127.16.67" "12.127.16.68"
+"50.220.226.155" "50.220.226.156" "207.68.32.39" "207.68.32.40"
+"151.197.0.38" "151.198.0.38" "151.199.0.38" "151.200.0.38"
+"151.201.0.38" "151.202.0.38" "151.203.0.38" "151.204.0.38"
+"151.205.0.38" "151.206.0.38" "151.207.0.38" "151.208.0.38"
+"23.19.245.88" "23.19.245.89" "38.132.106.139" "38.132.106.140"
+"80.67.169.12" "80.67.169.40" "109.69.8.51" "109.69.8.52"
+"64.69.100.68" "64.69.98.35" "204.194.232.200" "204.194.234.200"
+"209.51.161.14" "209.51.161.15" "195.243.214.4" "195.243.214.5"
+"37.235.1.174" "37.235.1.177" "45.33.97.5" "45.33.97.6"
 )
-
-# ---- SAUDI ARABIA (>=300) ----
-SAUDI_DNS=(
-  # 85.194.0.0/24
-  $(expand_range "85.194.0.1" "85.194.0.254")
-  # 86.51.0.0/24
-  $(expand_range "86.51.0.1" "86.51.0.254")
-  # 188.48.0.0/24
-  $(expand_range "188.48.0.1" "188.48.0.254")
-  # 195.246.48.0/24
-  $(expand_range "195.246.48.1" "195.246.48.254")
-  # 217.17.32.0/24
-  $(expand_range "217.17.32.1" "217.17.32.254")
-  # 213.230.0.0/24
-  $(expand_range "213.230.0.1" "213.230.0.254")
-  # 188.54.0.0/24
-  $(expand_range "188.54.0.1" "188.54.0.254")
+# =========================
+# PC Game DNS (200)
+# =========================
+PC_DNS=(
+"1.1.1.1" "1.0.0.1" "8.8.8.8" "8.8.4.4" "9.9.9.9" "149.112.112.112"
+"208.67.222.222" "208.67.220.220" "94.140.14.14" "94.140.15.15"
+"77.88.8.8" "77.88.8.1" "185.222.222.222" "185.184.222.222"
+"64.6.64.6" "64.6.65.6" "76.76.2.0" "76.76.10.0"
+"156.154.70.1" "156.154.71.1" "45.90.28.193" "45.90.30.193"
+"45.90.28.0" "45.90.30.0" "91.239.100.100" "89.233.43.71"
+"185.228.168.9" "185.228.169.9" "74.82.42.42" "209.244.0.3"
+"209.244.0.4" "216.146.35.35" "216.146.36.36" "8.26.56.26"
+"8.20.247.20" "4.2.2.1" "4.2.2.2" "4.2.2.3" "4.2.2.4"
+"4.2.2.5" "4.2.2.6" "23.253.163.53" "198.101.242.72"
+"64.94.1.1" "165.87.13.129" "204.117.214.10" "151.196.0.37"
+"151.197.0.37" "151.198.0.37" "151.199.0.37" "151.201.0.37"
+"151.202.0.37" "151.203.0.37" "151.204.0.37" "151.205.0.37"
+"205.214.45.10" "199.85.126.10" "198.54.117.10" "165.87.201.244"
+"66.109.229.6" "64.80.255.251" "216.170.153.146" "216.165.129.157"
+"64.233.217.2" "64.233.217.3" "64.233.217.4" "64.233.217.5"
+"64.233.217.6" "64.233.217.7" "64.233.217.8" "74.125.45.2"
+"74.125.45.3" "74.125.45.4" "74.125.45.5" "74.125.45.6"
+"74.125.45.7" "74.125.45.8" "8.34.34.34" "8.35.35.35"
+"195.243.214.4" "195.243.214.5" "64.69.100.68" "64.69.98.35"
+"204.194.232.200" "204.194.234.200" "209.51.161.14" "209.51.161.15"
+"45.33.97.5" "45.33.97.6" "80.67.169.12" "80.67.169.40"
+"109.69.8.51" "109.69.8.52" "185.117.118.20" "185.117.118.21"
+"202.153.220.42" "202.153.220.43" "198.153.194.40" "198.153.192.1"
+"37.235.1.174" "37.235.1.177" "62.113.113.113" "62.113.113.114"
+"176.103.130.130" "176.103.130.131" "94.16.114.254" "94.16.114.253"
+"45.90.28.165" "45.90.30.165" "185.228.168.10" "185.228.169.10"
+"185.228.168.168" "185.228.169.168" "185.228.168.9" "185.228.169.9"
+"103.86.96.100" "103.86.99.100" "202.44.204.34" "202.44.204.35"
+"210.86.181.20" "210.86.181.21" "203.146.237.222" "203.146.237.223"
+"210.0.255.251" "210.0.255.252" "218.102.23.228" "218.102.23.229"
+"122.3.0.18" "122.3.0.19" "61.19.42.5" "61.19.42.6"
+"203.113.1.9" "203.113.1.10" "74.125.45.9" "74.125.45.10"
+"12.127.17.72" "12.127.17.73" "205.171.3.65" "205.171.3.66"
+"98.38.222.125" "98.38.222.126" "50.204.174.58" "50.204.174.59"
+"68.94.156.1" "68.94.157.1" "4.53.7.34" "4.53.7.36"
+"207.69.188.186" "207.69.188.187" "63.171.232.38" "63.171.232.39"
+"24.29.103.15" "24.29.103.16" "151.197.0.38" "151.198.0.38"
+"151.199.0.38" "151.200.0.38" "151.201.0.38" "151.202.0.38"
+"151.203.0.38" "151.204.0.38" "151.205.0.38" "151.206.0.38"
+"151.207.0.38" "151.208.0.38" "23.19.245.88" "23.19.245.89"
+"38.132.106.139" "38.132.106.140" "91.239.100.100" "185.228.168.168"
 )
-
-# ---- TURKEY (>=300) ----
-TURKEY_DNS=(
-  # 88.224.0.0/24
-  $(expand_range "88.224.0.1" "88.224.0.254")
-  # 95.0.0.0/24
-  $(expand_range "95.0.0.1" "95.0.0.254")
-  # 176.40.0.0/24
-  $(expand_range "176.40.0.1" "176.40.0.254")
-  # 185.15.0.0/24
-  $(expand_range "185.15.0.1" "185.15.0.254")
-  # 212.156.0.0/24
-  $(expand_range "212.156.0.1" "212.156.0.254")
-  # 213.14.0.0/24
-  $(expand_range "213.14.0.1" "213.14.0.254")
-  # 176.232.0.0/24
-  $(expand_range "176.232.0.1" "176.232.0.254")
+# =========================
+# Console Game DNS (200)
+# =========================
+CONSOLE_DNS=(
+"8.8.8.8" "8.8.4.4" "1.1.1.1" "1.0.0.1"
+"208.67.222.222" "208.67.220.220"
+"9.9.9.9" "149.112.112.112"
+"64.6.64.6" "64.6.65.6"
+"156.154.70.1" "156.154.71.1"
+"76.76.2.0" "76.76.10.0"
+"185.228.168.9" "185.228.169.9"
+"45.90.28.0" "45.90.30.0"
+"77.88.8.8" "77.88.8.1"
+"94.140.14.14" "94.140.15.15"
+"91.239.100.100" "89.233.43.71"
+"185.117.118.20" "185.117.118.21"
+"202.153.220.42" "202.153.220.43"
+"185.222.222.222" "185.184.222.222"
+"74.82.42.42" "209.244.0.3" "209.244.0.4"
+"216.146.35.35" "216.146.36.36"
+"8.26.56.26" "8.20.247.20"
+"45.90.28.193" "45.90.30.193"
+"45.90.28.165" "45.90.30.165"
+"176.103.130.130" "176.103.130.131"
+"37.235.1.174" "37.235.1.177"
+"62.113.113.113" "62.113.113.114"
+"94.16.114.254" "94.16.114.253"
+"103.86.96.100" "103.86.99.100"
+"202.44.204.34" "202.44.204.35"
+"210.86.181.20" "210.86.181.21"
+"203.146.237.222" "203.146.237.223"
+"210.0.255.251" "210.0.255.252"
+"218.102.23.228" "218.102.23.229"
+"122.3.0.18" "122.3.0.19"
+"61.19.42.5" "61.19.42.6"
+"203.113.1.9" "203.113.1.10"
+"12.127.17.72" "12.127.17.73"
+"205.171.3.65" "205.171.3.66"
+"98.38.222.125" "98.38.222.126"
+"50.204.174.58" "50.204.174.59"
+"68.94.156.1" "68.94.157.1"
+"4.53.7.34" "4.53.7.36"
+"207.69.188.186" "207.69.188.187"
+"63.171.232.38" "63.171.232.39"
+"24.29.103.15" "24.29.103.16"
+"151.197.0.38" "151.198.0.38"
+"151.199.0.38" "151.200.0.38"
+"151.201.0.38" "151.202.0.38"
+"151.203.0.38" "151.204.0.38"
+"151.205.0.38" "151.206.0.38"
+"23.19.245.88" "23.19.245.89"
+"38.132.106.139" "38.132.106.140"
+"91.239.100.100" "185.228.168.168"
+"64.69.100.68" "64.69.98.35"
+"204.194.232.200" "204.194.234.200"
+"209.51.161.14" "209.51.161.15"
+"45.33.97.5" "45.33.97.6"
+"80.67.169.12" "80.67.169.40"
+"109.69.8.51" "109.69.8.52"
+"198.153.194.40" "198.153.192.1"
+"185.228.168.10" "185.228.169.10"
+"185.228.168.168" "185.228.169.168"
+"202.44.52.1" "202.44.52.2"
+"43.230.123.1" "43.230.123.2"
+"202.83.121.1" "202.83.121.2"
+"45.248.24.1" "45.248.24.2"
+"139.130.4.4" "139.130.4.5"
+"144.139.9.9" "144.139.9.10"
+"103.86.96.10" "103.86.99.10"
+"211.25.1.1" "211.25.1.2"
+"210.55.1.1" "210.55.1.2"
+"149.112.121.10" "149.112.122.10"
+"149.112.121.20" "149.112.122.20"
+"64.6.64.1" "64.6.65.1"
+"62.89.8.1" "62.89.8.2"
+"37.120.130.1" "37.120.130.2"
+"77.88.8.2" "77.88.8.3"
+"91.217.137.37" "91.217.137.38"
+"45.11.45.11" "45.11.45.12"
+"95.85.95.85" "95.85.95.86"
+"217.169.20.20" "217.169.20.21"
+"45.33.32.156" "45.33.32.157"
+"185.222.222.220" "185.222.222.221"
+"43.229.60.1" "43.229.60.2"
+"101.100.100.100" "101.101.101.101"
+"123.176.31.1" "123.176.31.2"
+"43.225.53.1" "43.225.53.2"
+"202.136.162.1" "202.136.162.2"
+"185.233.106.1" "185.233.106.2"
+"195.46.39.39" "195.46.39.40"
+"176.56.236.1" "176.56.236.2"
+"5.2.75.75" "5.2.75.76"
 )
-
-# ---- UAE (>=300) ----
-UAE_DNS=(
-  # 94.200.0.0/24
-  $(expand_range "94.200.0.1" "94.200.0.254")
-  # 195.229.0.0/24
-  $(expand_range "195.229.0.1" "195.229.0.254")
-  # 217.165.0.0/24
-  $(expand_range "217.165.0.1" "217.165.0.254")
-  # 2.49.0.0/24
-  $(expand_range "2.49.0.1" "2.49.0.254")
-  # 5.194.0.0/24
-  $(expand_range "5.194.0.1" "5.194.0.254")
-  # 2.50.0.0/24
-  $(expand_range "2.50.0.1" "2.50.0.254")
-  # 83.110.0.0/24
-  $(expand_range "83.110.0.1" "83.110.0.254")
+# =========================
+# Download / Anti-block DNS (200)
+# =========================
+DOWNLOAD_DNS=(
+"1.1.1.1" "1.0.0.1"
+"8.8.8.8" "8.8.4.4"
+"9.9.9.9" "149.112.112.112"
+"208.67.222.222" "208.67.220.220"
+"64.6.64.6" "64.6.65.6"
+"185.222.222.222" "185.184.222.222"
+"94.140.14.14" "94.140.15.15"
+"77.88.8.8" "77.88.8.1"
+"91.239.100.100" "89.233.43.71"
+"45.90.28.0" "45.90.30.0"
+"76.76.2.0" "76.76.10.0"
+"185.228.168.9" "185.228.169.9"
+"185.117.118.20" "185.117.118.21"
+"74.82.42.42" "209.244.0.3"
+"209.244.0.4" "216.146.35.35"
+"216.146.36.36" "8.26.56.26"
+"8.20.247.20" "45.90.28.193"
+"45.90.30.193" "176.103.130.130"
+"176.103.130.131" "37.235.1.174"
+"37.235.1.177" "62.113.113.113"
+"62.113.113.114" "94.16.114.254"
+"94.16.114.253" "103.86.96.100"
+"103.86.99.100" "202.153.220.42"
+"202.153.220.43" "185.228.168.168"
+"185.228.169.168" "202.44.204.34"
+"202.44.204.35" "210.86.181.20"
+"210.86.181.21" "203.146.237.222"
+"203.146.237.223" "210.0.255.251"
+"210.0.255.252" "218.102.23.228"
+"218.102.23.229" "122.3.0.18"
+"122.3.0.19" "61.19.42.5"
+"61.19.42.6" "203.113.1.9"
+"203.113.1.10" "12.127.17.72"
+"12.127.17.73" "205.171.3.65"
+"205.171.3.66" "98.38.222.125"
+"98.38.222.126" "50.204.174.58"
+"50.204.174.59" "68.94.156.1"
+"68.94.157.1" "4.53.7.34"
+"4.53.7.36" "207.69.188.186"
+"207.69.188.187" "63.171.232.38"
+"63.171.232.39" "24.29.103.15"
+"24.29.103.16" "151.197.0.38"
+"151.198.0.38" "151.199.0.38"
+"151.200.0.38" "151.201.0.38"
+"151.202.0.38" "151.203.0.38"
+"151.204.0.38" "151.205.0.38"
+"151.206.0.38" "23.19.245.88"
+"23.19.245.89" "38.132.106.139"
+"38.132.106.140" "64.69.100.68"
+"64.69.98.35" "204.194.232.200"
+"204.194.234.200" "209.51.161.14"
+"209.51.161.15" "45.33.97.5"
+"45.33.97.6" "80.67.169.12"
+"80.67.169.40" "109.69.8.51"
+"109.69.8.52" "198.153.194.40"
+"198.153.192.1" "185.228.168.10"
+"185.228.169.10" "185.228.168.168"
+"185.228.169.168" "202.44.52.1"
+"202.44.52.2" "43.230.123.1"
+"43.230.123.2" "202.83.121.1"
+"202.83.121.2" "45.248.24.1"
+"45.248.24.2" "139.130.4.4"
+"139.130.4.5" "144.139.9.9"
+"144.139.9.10" "103.86.96.10"
+"103.86.99.10" "211.25.1.1"
+"211.25.1.2" "210.55.1.1"
+"210.55.1.2" "149.112.121.10"
+"149.112.122.10" "149.112.121.20"
+"149.112.122.20" "64.6.64.1"
+"64.6.65.1" "62.89.8.1"
+"62.89.8.2" "37.120.130.1"
+"37.120.130.2" "77.88.8.2"
+"77.88.8.3" "91.217.137.37"
+"91.217.137.38" "45.11.45.11"
+"45.11.45.12" "95.85.95.85"
+"95.85.95.86" "217.169.20.20"
+"217.169.20.21" "45.33.32.156"
+"45.33.32.157" "185.222.222.220"
+"185.222.222.221" "43.229.60.1"
+"43.229.60.2" "101.100.100.100"
+"101.101.101.101" "123.176.31.1"
+"123.176.31.2" "43.225.53.1"
+"43.225.53.2" "202.136.162.1"
+"202.136.162.2" "185.233.106.1"
+"185.233.106.2" "195.46.39.39"
+"195.46.39.40" "176.56.236.1"
+"176.56.236.2" "5.2.75.75"
+"5.2.75.76"
 )
-# ---------- PART 3: GAME LISTS ----------
+# =========================
+# Generate DNS (by Country)
+# =========================
 
-# 70 Mobile Games
-mobile_games=(
-"PUBG Mobile" "Call of Duty Mobile" "Garena Free Fire" "Arena Breakout"
-"Clash of Clans" "Clash Royale" "Brawl Stars" "Mobile Legends"
-"Among Us" "Genshin Impact" "Roblox" "Minecraft Pocket Edition"
-"Subway Surfers" "Candy Crush Saga" "Asphalt 9" "AFK Arena"
-"Summoners War" "Pokemon Go" "Lords Mobile" "Dragon Raja"
-"Rise of Kingdoms" "State of Survival" "Boom Beach" "War Robots"
-"Marvel Future Fight" "EFootball Mobile" "FIFA Mobile" "Apex Legends Mobile"
-"League of Legends: Wild Rift" "Crossfire Legends" "Bullet Echo"
-"Standoff 2" "Shadowgun Legends" "World War Heroes" "MadOut2 BigCityOnline"
-"Grimvalor" "Vector 2" "Soul Knight" "Honkai Impact 3rd"
-"Identity V" "LifeAfter" "Rules of Survival" "Dragon Nest M"
-"Kingdom Rush" "Bloons TD Battles" "Hay Day" "SimCity BuildIt"
-"Archero" "Heroes Evolved" "Arena of Valor" "Order & Chaos"
-"Eternium" "Critical Ops" "Sniper 3D" "Zombie Catchers"
-"Stick War: Legacy" "Geometry Dash" "Plague Inc" "Sky: Children of the Light"
-"Pixel Gun 3D" "Fortnite Mobile" "Mini Militia" "Gangstar Vegas"
-"World of Tanks Blitz" "Modern Combat 5" "Real Racing 3" "N.O.V.A Legacy"
-"Last Day on Earth" "The Sims Mobile"
-)
+generate_ipv4(){
+  local base=$1
+  local count=$2
+  for ((i=1; i<=count; i++)); do
+    # Generate last 2 octets random
+    local a=$((RANDOM % 255))
+    local b=$((RANDOM % 255))
+    echo "${base}.${a}.${b}"
+  done
+}
 
-# 70 PC Games
-pc_games=(
-"Counter-Strike 2" "CS:GO" "Valorant" "Dota 2" "League of Legends"
-"World of Warcraft" "Overwatch 2" "Call of Duty Warzone"
-"Call of Duty MWII" "Apex Legends" "Rainbow Six Siege" "Battlefield V"
-"Battlefield 2042" "Minecraft" "Fortnite" "Rocket League"
-"Fall Guys" "Among Us (PC)" "PUBG PC" "Lost Ark"
-"Starcraft II" "Diablo IV" "Path of Exile" "Team Fortress 2"
-"Paladins" "Smite" "Warframe" "Destiny 2"
-"Elder Scrolls Online" "Final Fantasy XIV" "Runescape" "Guild Wars 2"
-"Rust" "ARK Survival" "DayZ" "Escape from Tarkov"
-"Sea of Thieves" "Halo Infinite" "Left 4 Dead 2" "Payday 2"
-"Garry’s Mod" "Terraria" "Stardew Valley" "Cyberpunk 2077"
-"The Witcher 3" "Elden Ring" "Dark Souls III" "Sekiro"
-"Dead by Daylight" "Phasmophobia" "Resident Evil 4 Remake"
-"Monster Hunter World" "Borderlands 3" "Far Cry 6" "Watch Dogs Legion"
-"GTA V" "Red Dead Redemption 2" "Assassin’s Creed Valhalla"
-"Horizon Zero Dawn" "God of War PC" "Spider-Man Remastered"
-"Uncharted Legacy" "Forza Horizon 5" "Need for Speed Heat"
-"FIFA 23" "eFootball 2023" "Madden NFL 23" "NBA 2K23"
-"Total War: Warhammer III" "Civilization VI"
-)
+generate_ipv6(){
+  local prefix=$1
+  local count=$2
+  for ((i=1; i<=count; i++)); do
+    # Random hex groups for IPv6
+    local h1=$(printf "%x" $((RANDOM%65535)))
+    local h2=$(printf "%x" $((RANDOM%65535)))
+    echo "${prefix}:${h1}:${h2}::1"
+  done
+}
 
-# 70 Console Games
-console_games=(
-"Fortnite Console" "Call of Duty MWII Console" "FIFA 23 Console"
-"eFootball Console" "NBA 2K23 Console" "Madden NFL 23 Console"
-"Rocket League Console" "Minecraft Console" "Roblox Console"
-"PUBG Console" "Apex Legends Console" "Valorant Console"
-"Overwatch 2 Console" "Rainbow Six Siege Console"
-"Battlefield 2042 Console" "Warframe Console" "Destiny 2 Console"
-"Smite Console" "Paladins Console" "Dota 2 Console"
-"League of Legends Console" "Among Us Console" "Fall Guys Console"
-"World of Tanks Console" "World of Warships Console"
-"GTA V Console" "Red Dead Redemption 2 Console"
-"Assassin’s Creed Valhalla Console" "Far Cry 6 Console"
-"Watch Dogs Legion Console" "Cyberpunk 2077 Console"
-"Elden Ring Console" "The Witcher 3 Console" "Dark Souls III Console"
-"Sekiro Console" "Resident Evil 4 Console" "Monster Hunter World Console"
-"Borderlands 3 Console" "Forza Horizon 5 Console" "Need for Speed Heat Console"
-"Halo Infinite Console" "Sea of Thieves Console" "Rust Console"
-"ARK Console" "DayZ Console" "Escape from Tarkov Console"
-"Uncharted Console" "God of War Console" "Spider-Man Console"
-"Horizon Forbidden West" "Gran Turismo 7" "Ratchet & Clank Rift Apart"
-"Returnal" "Demon’s Souls" "Ghost of Tsushima" "Bloodborne"
-"The Last of Us Part I" "The Last of Us Part II" "Days Gone"
-"Detroit Become Human" "Infamous Second Son" "Shadow of the Colossus"
-"Persona 5 Royal" "Yakuza Like a Dragon" "Nier Automata"
-"Tales of Arise" "Dragon Quest XI" "Final Fantasy VII Remake"
-"Final Fantasy XVI" "Street Fighter 6"
-)
-# ---------- PART 4: MENUS FOR GAMES ----------
-
-menu_mobile() {
+menu_generate(){
   while true; do
-    title
-    echo "=== Mobile Games ==="
-    local i=1
-    for g in "${mobile_games[@]}"; do
-      printf "%2d) %s\n" "$i" "$g"
-      i=$((i+1))
-    done
-    echo " 0) Back"
-    echo
-    read -rp "Choose a game: " choice
-    if [[ "$choice" == "0" ]]; then return; fi
-    if (( choice>=1 && choice<=${#mobile_games[@]} )); then
-      echo "Selected: ${mobile_games[$choice-1]}"
-      serve_dns_set IRAN_DNS
-      print_footer
-      pause_enter
-    else
-      echo "Invalid option."
-      pause_enter
-    fi
-  done
-}
-
-menu_pc() {
-  while true; do
-    title
-    echo "=== PC Games ==="
-    local i=1
-    for g in "${pc_games[@]}"; do
-      printf "%2d) %s\n" "$i" "$g"
-      i=$((i+1))
-    done
-    echo " 0) Back"
-    echo
-    read -rp "Choose a game: " choice
-    if [[ "$choice" == "0" ]]; then return; fi
-    if (( choice>=1 && choice<=${#pc_games[@]} )); then
-      echo "Selected: ${pc_games[$choice-1]}"
-      serve_dns_set TURKEY_DNS
-      print_footer
-      pause_enter
-    else
-      echo "Invalid option."
-      pause_enter
-    fi
-  done
-}
-
-menu_console() {
-  while true; do
-    title
-    echo "=== Console Games ==="
-    local i=1
-    for g in "${console_games[@]}"; do
-      printf "%2d) %s\n" "$i" "$g"
-      i=$((i+1))
-    done
-    echo " 0) Back"
-    echo
-    read -rp "Choose a game: " choice
-    if [[ "$choice" == "0" ]]; then return; fi
-    if (( choice>=1 && choice<=${#console_games[@]} )); then
-      echo "Selected: ${console_games[$choice-1]}"
-      serve_dns_set SAUDI_DNS
-      print_footer
-      pause_enter
-    else
-      echo "Invalid option."
-      pause_enter
-    fi
-  done
-}
-# ---------- PART 5: DNS GENERATOR ----------
-
-# Country IPv4 bases (first 3 octets) — realistic-looking blocks
-IRAN_V4_BASES=( "5.160.0" "5.160.1" "31.7.64" "37.255.128" "79.175.128" "185.55.224" "185.120.221" )
-KSA_V4_BASES=( "85.194.0" "86.51.0" "188.48.0" "195.246.48" "217.17.32" "213.230.0" "188.54.0" )
-TURKEY_V4_BASES=( "88.224.0" "95.0.0" "176.40.0" "185.15.0" "212.156.0" "213.14.0" "176.232.0" )
-UAE_V4_BASES=( "94.200.0" "195.229.0" "217.165.0" "2.49.0" "5.194.0" "2.50.0" "83.110.0" )
-
-# Country IPv6 prefixes (two-hextet prefixes to complete to 8 hextets)
-IRAN_V6_PREFIXES=( "2a0a:2b40" "2a0a:2b41" "2a0a:2b42" )
-KSA_V6_PREFIXES=( "2a02:ed00" "2a02:ed01" "2a02:ed02" )
-TURKEY_V6_PREFIXES=( "2a02:ff80" "2a02:ff81" "2a02:ff82" )
-UAE_V6_PREFIXES=( "2a01:4840" "2a01:4841" "2a01:4842" )
-
-# Random helpers
-rand_between() { # inclusive
-  # usage: rand_between 1 254
-  local lo=$1 hi=$2
-  echo $(( lo + RANDOM % (hi - lo + 1) ))
-}
-
-hex4() { printf "%x" "$(rand_between 0 65535)"; }
-
-# Generate one IPv4 from country bases
-gen_one_v4_from() {
-  local -n bases=$1
-  local base=${bases[$((RANDOM % ${#bases[@]}))]}
-  local last_octet
-  last_octet=$(rand_between 1 254)
-  echo "$base.$last_octet"
-}
-
-# Generate one IPv6 from country prefixes
-gen_one_v6_from() {
-  local -n prefs=$1
-  local pfx=${prefs[$((RANDOM % ${#prefs[@]}))]}
-  # Complete to 8 hextets: pfx:h3:h4:h5:h6:h7:h8
-  echo "$pfx:$(hex4):$(hex4):$(hex4):$(hex4):$(hex4):$(hex4)"
-}
-
-# Pretty print a numbered list with optional ping check
-print_dns_list() {
-  local with_ping=$1; shift
-  local -n list=$1
-  local i=1
-  for ip in "${list[@]}"; do
-    if [[ "$with_ping" == "1" ]]; then
-      local p
-      p=$(ping -c1 -W1 "$ip" 2>/dev/null | grep 'time=' | awk -F'time=' '{print $2}' | awk '{print $1}')
-      [[ -z "$p" ]] && p="timeout" || p="${p} ms"
-      printf "%3d) %-39s → %s\n" "$i" "$ip" "$p"
-    else
-      printf "%3d) %s\n" "$i" "$ip"
-    fi
-    i=$((i+1))
-  done
-}
-
-# Menu to generate v4 or v6 for a selected country
-menu_generate_dns() {
-  while true; do
-    title
-    echo "=== DNS Generator ==="
+    clear
+    print_footer
+    echo "====== DNS Generator ======"
     echo "1) Iran"
     echo "2) Saudi Arabia"
     echo "3) Turkey"
     echo "4) UAE"
+    echo "5) USA"
     echo "0) Back"
-    read -rp "Select country: " c
-    local country
-    local v4_ref v6_ref
-    case "$c" in
-      0) return ;;
-      1) country="Iran";          v4_ref=IRAN_V4_BASES;  v6_ref=IRAN_V6_PREFIXES ;;
-      2) country="Saudi Arabia";  v4_ref=KSA_V4_BASES;   v6_ref=KSA_V6_PREFIXES  ;;
-      3) country="Turkey";        v4_ref=TURKEY_V4_BASES;v6_ref=TURKEY_V6_PREFIXES ;;
-      4) country="UAE";           v4_ref=UAE_V4_BASES;   v6_ref=UAE_V6_PREFIXES  ;;
-      *) echo "Invalid choice"; pause_enter; continue ;;
+    read -rp "Select Country: " c
+
+    case $c in
+      1) country="Iran"; v4="5.120"; v6="2a0a:2b40";;
+      2) country="Saudi Arabia"; v4="185.96"; v6="2a03:2880";;
+      3) country="Turkey"; v4="176.55"; v6="2a02:ff0";;
+      4) country="UAE"; v4="94.200"; v6="2a02:8300";;
+      5) country="USA"; v4="23.19"; v6="2600:1400";;
+      0) return;;
+      *) echo "Invalid"; sleep 1; continue;;
     esac
 
-    echo
-    echo "1) IPv4"
-    echo "2) IPv6"
-    echo "0) Back"
-    read -rp "Select type: " t
-    case "$t" in
-      0) continue ;;
-      1) type="IPv4" ;;
-      2) type="IPv6" ;;
-      *) echo "Invalid choice"; pause_enter; continue ;;
-    esac
+    echo "Country: $country"
+    read -rp "Do you want IPv4 or IPv6? (4/6): " ipver
+    read -rp "How many DNS do you want?: " num
 
-    read -rp "How many DNS addresses? " num
-    [[ -z "$num" || "$num" -le 0 ]] && echo "Invalid count." && pause_enter && continue
-
-    echo
-    echo "Generate with live ping? (slower) [y/N]"
-    read -r do_ping
-    local with_ping=0
-    [[ "$do_ping" =~ ^[Yy]$ ]] && with_ping=1
-
-    echo
-    echo "Generating $num $type DNS for $country..."
-    local out=()
-    if [[ "$type" == "IPv4" ]]; then
-      local -n bases="$v4_ref"
-      for ((i=1;i<=num;i++)); do
-        out+=("$(gen_one_v4_from bases)")
-      done
+    echo "Generated DNS:"
+    if [[ $ipver == "4" ]]; then
+      generate_ipv4 "$v4" "$num"
     else
-      local -n prefs="$v6_ref"
-      for ((i=1;i<=num;i++)); do
-        out+=("$(gen_one_v6_from prefs)")
-      done
+      generate_ipv6 "$v6" "$num"
     fi
 
     echo
-    print_dns_list "$with_ping" out
-    echo
-    print_footer
-    pause_enter
+    read -rp "Press Enter to continue..."
   done
 }
-# ---------- PART 6: MAIN MENU ----------
+# =========================
+# Main Menu
+# =========================
 
-menu_main() {
+main_menu(){
   while true; do
     title
-    echo "=== Game DNS Manager ==="
-    echo "1) Mobile Games"
-    echo "2) PC Games"
-    echo "3) Console Games"
-    echo "4) Generate DNS"
-    echo "5) Download DNS"
+    echo "========= Main Menu ========="
+    echo "1) Mobile Games DNS"
+    echo "2) PC Games DNS"
+    echo "3) Console Games DNS"
+    echo "4) Download DNS"
+    echo "5) Generate DNS"
+    echo "6) Search Game & Device"
     echo "0) Exit"
-    echo
+    echo "============================="
     read -rp "Choose an option: " opt
-    case "$opt" in
-      1) menu_mobile ;;
-      2) menu_pc ;;
-      3) menu_console ;;
-      4) menu_generate_dns ;;
-      5) menu_download_dns ;;   # still to define
-      0) exit 0 ;;
-      *) echo "Invalid option."; pause_enter ;;
+
+    case $opt in
+      1) menu_mobile ;;   # <-- this will call mobile menu
+      2) menu_pc ;;       # <-- this will call pc menu
+      3) menu_console ;;  # <-- this will call console menu
+      4) menu_download ;; # <-- this will call download menu
+      5) menu_generate ;; # <-- NEW generate dns section
+      6) menu_search ;;   # <-- search section
+      0) echo "Goodbye!"; exit 0 ;;
+      *) echo "Invalid option"; sleep 1 ;;
     esac
   done
 }
 
-# Placeholder for download menu (can be expanded later)
-menu_download_dns() {
-  while true; do
-    title
-    echo "=== Download DNS (Exclusive) ==="
-    echo "Feature coming soon with 200+ premium DNS..."
-    echo "0) Back"
-    read -rp "Choose: " d
-    [[ "$d" == "0" ]] && return
-  done
-}
-
-# ---------- ENTRY POINT ----------
-menu_main
+# Start program
+ensure_ping
+main_menu
