@@ -132,7 +132,26 @@ MOBILE_DNS=(
 "98.38.222.125" "98.38.222.126" "50.204.174.58" "50.204.174.59"
 "68.94.156.1" "68.94.157.1" "12.127.17.72" "12.127.17.73"
 "205.171.3.65" "205.171.3.66" "149.112.112.10" "9.9.9.10"
-"209.18.47.61" "209.18.47.62" "12.127.16.67" "12.127.16.68"
+"209.18.47.61" "209.18.47.62" 
+"50.220.226.155" "50.220.226.156" "207.68.32.39" "207.68.32.40"
+"151.197.0.38" "151.198.0.38" "151.199.0.38" "151.200.0.38"
+"151.201.0.38" "151.202.0.38" "151.203.0.38" "151.204.0.38"
+"151.205.0.38" "151.206.0.38" "151.207.0.38" "151.208.0.38"
+"23.19.245.88" "23.19.245.89" "38.132.106.139" "38.132.106.140"
+"80.67.169.12" "80.67.169.40" "109.69.8.51" "109.69.8.52"
+"64.69.100.68" "64.69.98.35" "204.194.232.200" "204.194.234.200"
+"209.51.161.14" "209.51.161.15" "195.243.214.4" "195.243.214.5"
+"37.235.1.174" "37.235.1.177" "45.33.97.5" "45.33.97.6"
+"12.127.16.67" "12.127.16.68"
+"50.220.226.155" "50.220.226.156" "207.68.32.39" "207.68.32.40"
+"151.197.0.38" "151.198.0.38" "151.199.0.38" "151.200.0.38"
+"151.201.0.38" "151.202.0.38" "151.203.0.38" "151.204.0.38"
+"151.205.0.38" "151.206.0.38" "151.207.0.38" "151.208.0.38"
+"23.19.245.88" "23.19.245.89" "38.132.106.139" "38.132.106.140"
+"80.67.169.12" "80.67.169.40" "109.69.8.51" "109.69.8.52"
+"64.69.100.68" "64.69.98.35" "204.194.232.200" "204.194.234.200"
+"209.51.161.14" "209.51.161.15" "195.243.214.4" "195.243.214.5"
+"37.235.1.174" "37.235.1.177" "45.33.97.5" "45.33.97.6"
 "50.220.226.155" "50.220.226.156" "207.68.32.39" "207.68.32.40"
 "151.197.0.38" "151.198.0.38" "151.199.0.38" "151.200.0.38"
 "151.201.0.38" "151.202.0.38" "151.203.0.38" "151.204.0.38"
@@ -240,6 +259,21 @@ PC_DNS=(
 "64.69.100.68" "64.69.98.35" "204.194.232.200" "204.194.234.200"
 "209.51.161.14" "209.51.161.15" "195.243.214.4" "195.243.214.5"
 "37.235.1.174" "37.235.1.177" "45.33.97.5" "45.33.97.6"
+"8.20.247.20" "4.2.2.1" "4.2.2.2" "4.2.2.3" "4.2.2.4"
+"4.2.2.5" "4.2.2.6" "23.253.163.53" "198.101.242.72"
+"64.94.1.1" "165.87.13.129" "204.117.214.10" "151.196.0.37"
+"151.197.0.37" "151.198.0.37" "151.199.0.37" "151.201.0.37"
+"151.202.0.37" "151.203.0.37" "151.204.0.37" "151.205.0.37"
+"205.214.45.10" "199.85.126.10" "198.54.117.10" "165.87.201.244"
+"66.109.229.6" "64.80.255.251" "216.170.153.146" "216.165.129.157"
+"64.233.217.2" "64.233.217.3" "64.233.217.4" "64.233.217.5"
+"64.233.217.6" "64.233.217.7" "64.233.217.8" "74.125.45.2"
+"74.125.45.3" "74.125.45.4" "74.125.45.5" "74.125.45.6"
+"74.125.45.7" "74.125.45.8" "8.34.34.34" "8.35.35.35"
+"203.113.1.9" "203.113.1.10" "61.19.42.5" "61.19.42.6"
+"122.3.0.18" "122.3.0.19" "218.102.23.228" "218.102.23.229"
+"210.0.255.251" "210.0.255.252" "202.44.204.34" "202.44.204.35"
+"203.146.237.222" "203.146.237.223" "210.86.181.20" "210.86.181.21"
 )
 # =========================
 # Download & Streaming DNS (200)
@@ -350,3 +384,433 @@ generate_menu() {
         *) echo "❌ Invalid option" ;;
     esac
 }
+#!/usr/bin/env bash
+# Part 8 — Menus, Search, Serve logic & Integration
+# Assumes previous parts defined:
+# - show_title()
+# - generate_menu()  (Part 7)
+# - Arrays: MOBILE_DNS, PC_DNS, CONSOLE_DNS, DOWNLOAD_DNS, GAMES_LIST
+# This part provides: service functions, game menus, search, download menu, and final main menu.
+
+# -------------------------
+# Small compatibility helpers
+# -------------------------
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+# latency in ms or "timeout"
+get_latency() {
+  local ip="$1"
+  # If empty input return timeout
+  if [ -z "$ip" ]; then echo "timeout"; return; fi
+
+  # Prefer ping compatible with system
+  if have_cmd ping; then
+    # Use one probe, 1s timeout
+    out=$(ping -c 1 -W 1 "$ip" 2>/dev/null) || out=""
+    if echo "$out" | grep -q -i "time="; then
+      # extract number (may include decimals)
+      val=$(echo "$out" | sed -n 's/.*time=\([0-9.]\+\).*/\1/p' | head -n1)
+      if [ -n "$val" ]; then
+        # return integer ms
+        printf "%s\n" "${val%.*}"
+        return
+      fi
+    fi
+    # Busybox or other may not include time= but might include rtt line
+    if echo "$out" | grep -q -i "min/avg/max"; then
+      val=$(echo "$out" | sed -n 's/.* = \([0-9.]\+\)\/\([0-9.]\+\)\/.*/\2/p' | head -n1)
+      if [ -n "$val" ]; then
+        printf "%s\n" "${val%.*}"
+        return
+      fi
+    fi
+  fi
+  echo "timeout"
+}
+
+# safe array helpers
+array_len() { eval "echo \${#$1[@]}"; }
+array_get() { eval "echo \${$1[$2]}"; }
+
+# shuffle indices 0..n-1
+shuffle_indices() {
+  local n="$1"
+  local i arr=()
+  for ((i=0;i<n;i++)); do arr[i]=$i; done
+  # Fisher-Yates
+  for ((i=n-1;i>0;i--)); do
+    j=$((RANDOM % (i+1)))
+    tmp=${arr[i]}; arr[i]=${arr[j]}; arr[j]=$tmp
+  done
+  echo "${arr[@]}"
+}
+
+# sample up to 'sample_size' distinct indices from array length n
+sample_indices() {
+  local n="$1"; local sample_size="$2"
+  if (( sample_size >= n )); then
+    # return all indices
+    local all=()
+    for ((i=0;i<n;i++)); do all+=($i); done
+    echo "${all[@]}"; return
+  fi
+  # shuffle and take first sample_size
+  local shuffled; shuffled=($(shuffle_indices "$n"))
+  local out=("${shuffled[@]:0:sample_size}")
+  echo "${out[@]}"
+}
+
+# pick two distinct random entries from array
+pick_two_random() {
+  local arrname="$1"
+  local n; n=$(array_len "$arrname")
+  if (( n == 0 )); then echo ""; return; fi
+  if (( n == 1 )); then echo "$(array_get "$arrname" 0)"; return; fi
+  local i1=$((RANDOM % n))
+  local i2=$((RANDOM % n))
+  while [ "$i2" -eq "$i1" ]; do i2=$((RANDOM % n)); done
+  echo "$(array_get "$arrname" "$i1") $(array_get "$arrname" "$i2")"
+}
+
+# choose best two (lowest latency) by sampling up to sample_size candidates
+choose_best_two() {
+  local arrname="$1"
+  local sample_size="${2:-40}"  # default sampling
+  local n; n=$(array_len "$arrname")
+  if (( n == 0 )); then echo ""; return; fi
+  # adjust sample size to n
+  if (( sample_size > n )); then sample_size=$n; fi
+
+  local idxs; idxs=($(sample_indices "$n" "$sample_size"))
+  local best1_ip="" best2_ip=""
+  local best1_ms=999999 best2_ms=999999
+
+  for idx in "${idxs[@]}"; do
+    local ip; ip=$(array_get "$arrname" "$idx")
+    # skip empty
+    [ -z "$ip" ] && continue
+    local ms; ms=$(get_latency "$ip")
+    if [ "$ms" = "timeout" ]; then continue; fi
+    # numeric
+    if [ "$ms" -lt "$best1_ms" ] 2>/dev/null; then
+      best2_ms=$best1_ms; best2_ip="$best1_ip"
+      best1_ms=$ms; best1_ip="$ip"
+    elif [ "$ms" -lt "$best2_ms" ] 2>/dev/null; then
+      best2_ms=$ms; best2_ip="$ip"
+    fi
+  done
+
+  # fallback: if not found enough, pick randoms
+  if [ -z "$best1_ip" ]; then
+    echo "$(pick_two_random "$arrname")"
+    return
+  fi
+  if [ -z "$best2_ip" ]; then
+    # find any other different
+    local found=""
+    for ((i=0;i<n;i++)); do
+      ip=$(array_get "$arrname" "$i")
+      [ "$ip" = "$best1_ip" ] && continue
+      found="$ip"; break
+    done
+    if [ -z "$found" ]; then
+      echo "$best1_ip"
+    else
+      echo "$best1_ip $found"
+    fi
+    return
+  fi
+
+  echo "$best1_ip $best2_ip"
+}
+
+# print_dns_pair nicely
+print_dns_pair() {
+  local p1="$1" p2="$2"
+  local l1 l2
+  l1=$(get_latency "$p1"); l2=$(get_latency "$p2")
+  printf "Primary DNS:   %-18s → %sms\n" "$p1" "$l1"
+  printf "Secondary DNS: %-18s → %sms\n" "$p2" "$l2"
+}
+
+# serve function for arbitrary bank with threshold/regenerate logic
+# args: bank_array_name country_tag desired_mode sample_size threshold
+# mode: "best" or "random"
+serve_bank_for_country() {
+  local bank="$1"
+  local country="$2"
+  local mode="${3:-best}"
+  local sample_size="${4:-48}"
+  local threshold="${5:-46}"  # ms
+
+  local n; n=$(array_len "$bank")
+  if (( n == 0 )); then
+    echo "No DNS entries in bank: $bank"; return
+  fi
+
+  local pair
+  if [ "$mode" = "best" ]; then
+    pair=$(choose_best_two "$bank" "$sample_size")
+  else
+    pair=$(pick_two_random "$bank")
+  fi
+
+  local ip1 ip2
+  ip1=$(echo "$pair" | awk '{print $1}')
+  ip2=$(echo "$pair" | awk '{print $2}')
+
+  # if only one returned, try to pick another random
+  if [ -z "$ip2" ]; then
+    ip2=$(pick_two_random "$bank" | awk '{print $2}')
+  fi
+
+  # measure
+  local ms1 ms2
+  ms1=$(get_latency "$ip1"); ms2=$(get_latency "$ip2")
+
+  # if any exceed threshold or timeout, try generating replacements for the country
+  local bad=0
+  if [ "$ms1" = "timeout" ] || ! [[ "$ms1" =~ ^[0-9]+$ ]] || [ "$ms1" -gt "$threshold" ]; then bad=1; fi
+  if [ "$ms2" = "timeout" ] || ! [[ "$ms2" =~ ^[0-9]+$ ]] || [ "$ms2" -gt "$threshold" ]; then bad=1; fi
+
+  if (( bad )); then
+    # attempt to generate up to 4 candidates and pick those that pass
+    local gen_candidates=()
+    local attempts=0
+    while (( attempts < 200 && ${#gen_candidates[@]} < 2 )); do
+      attempts=$((attempts+1))
+      # Use the generate_menu's generator if exists: call generate_dns("$country") is interactive,
+      # so here we use a lightweight local generator (similar to Part7 generate_dns)
+      # We'll create candidate IPv4 addresses using country stems.
+      case "$country" in
+        Iran|IR|ir) cand="$(shuf -i 5-223 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 1-254 -n 1)" ;;
+        Saudi|SA)   cand="$(shuf -i 2-223 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 1-254 -n 1)" ;;
+        Turkey|TR)  cand="$(shuf -i 5-223 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 1-254 -n 1)" ;;
+        UAE|AE)     cand="$(shuf -i 5-223 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 1-254 -n 1)" ;;
+        USA|US)     cand="$(shuf -i 8-223 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 1-254 -n 1)" ;;
+        *)          cand="$(shuf -i 8-223 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 0-255 -n 1).$(shuf -i 1-254 -n 1)" ;;
+      esac
+      # test latency
+      lc=$(get_latency "$cand")
+      if [[ "$lc" =~ ^[0-9]+$ ]] && [ "$lc" -le "$threshold" ]; then
+        # keep unique
+        local dup=0
+        for e in "${gen_candidates[@]}"; do [ "$e" = "$cand" ] && dup=1; done
+        if (( dup == 0 )); then gen_candidates+=("$cand"); fi
+      fi
+    done
+
+    # if we got any generated candidates, fill ip1/ip2 accordingly
+    if (( ${#gen_candidates[@]} >= 2 )); then
+      ip1="${gen_candidates[0]}"; ip2="${gen_candidates[1]}"
+    elif (( ${#gen_candidates[@]} == 1 )); then
+      ip1="${gen_candidates[0]}"
+      # try to find one good from bank
+      for ((i=0;i<n;i++)); do
+        cand=$(array_get "$bank" "$i")
+        lc=$(get_latency "$cand")
+        if [[ "$lc" =~ ^[0-9]+$ ]] && [ "$lc" -le "$threshold" ]; then
+          ip2="$cand"; break
+        fi
+      done
+      # fallback to any random if still empty
+      if [ -z "$ip2" ]; then ip2=$(pick_two_random "$bank" | awk '{print $2}'; fi
+    else
+      # no generated candidate; fallback keep original ip1/ip2
+      :
+    fi
+  fi
+
+  # print
+  echo "----------------------------------------"
+  echo "Country: $country"
+  print_dns_pair "$ip1" "$ip2"
+  echo "----------------------------------------"
+}
+
+# -------------------------
+# Game menus
+# -------------------------
+# Provide a simple game list if not defined
+if ! declare -p GAMES_LIST >/dev/null 2>&1; then
+  GAMES_LIST=(
+    "Free Fire" "PUBG Mobile" "PUBG PC" "Call of Duty Mobile" "Call of Duty Warzone"
+    "Apex Legends" "Fortnite" "Valorant" "Genshin Impact" "Farlight 84" "FC25" "FC25 PS5"
+  )
+fi
+
+# print numbered list
+print_numbered() {
+  local arrname="$1"
+  local n; n=$(array_len "$arrname")
+  for ((i=0;i<n;i++)); do
+    item=$(array_get "$arrname" "$i")
+    printf "%2d) %s\n" $((i+1)) "$item"
+  done
+  echo " 0) Back"
+}
+
+# helper to ask for country and convert to tag used by serve function
+ask_country_tag() {
+  echo "Select country:"
+  echo "1) Global"
+  echo "2) Iran"
+  echo "3) Saudi Arabia"
+  echo "4) Turkey"
+  echo "5) UAE"
+  echo "6) USA"
+  read -rp "Choice: " c
+  case "$c" in
+    1) echo "Global" ;;
+    2) echo "Iran" ;;
+    3) echo "Saudi" ;;
+    4) echo "Turkey" ;;
+    5) echo "UAE" ;;
+    6) echo "USA" ;;
+    *) echo "Global" ;;
+  esac
+}
+
+# serve game flow for a chosen device bank
+serve_game_flow() {
+  local bank="$1"   # "MOBILE_DNS" etc
+  local device="$2"
+  while true; do
+    show_title
+    echo "$device Games - choose a title:"
+    print_numbered GAMES_LIST
+    read -rp "Pick number (or 0 to back): " sel
+    if [ -z "$sel" ] || [ "$sel" = "0" ]; then return; fi
+    if ! [[ "$sel" =~ ^[0-9]+$ ]]; then echo "Invalid"; sleep 1; continue; fi
+    local idx=$((sel-1))
+    local cnt; cnt=$(array_len "GAMES_LIST")
+    if (( idx < 0 || idx >= cnt )); then echo "Invalid"; sleep 1; continue; fi
+    local game; game=$(array_get "GAMES_LIST" "$idx")
+    echo "Selected: $game"
+    # pick country
+    local country_tag; country_tag=$(ask_country_tag)
+    # if game is region-locked, prefer best mode; otherwise random/best ask
+    echo "Choose mode:"
+    echo "1) Best (low latency)"
+    echo "2) Random"
+    read -rp "Mode: " m
+    local mode="best"
+    if [ "$m" = "2" ]; then mode="random"; fi
+
+    # call serve
+    serve_bank_for_country "$bank" "$country_tag" "$mode" 48 46
+
+    read -rp "Press Enter to continue..." _
+  done
+}
+
+menu_game_mobile()   { serve_game_flow "MOBILE_DNS" "Mobile"; }
+menu_game_pc()       { serve_game_flow "PC_DNS"     "PC"; }
+menu_game_console()  { serve_game_flow "CONSOLE_DNS" "Console"; }
+
+# -------------------------
+# Search Game
+# -------------------------
+search_game_flow() {
+  show_title
+  echo "Search Game"
+  echo "Device: 1) Mobile 2) PC 3) Console 0) Back"
+  read -rp "Device: " d
+  case "$d" in
+    1) bank="MOBILE_DNS"; device="Mobile" ;;
+    2) bank="PC_DNS";     device="PC" ;;
+    3) bank="CONSOLE_DNS";device="Console" ;;
+    0|"") return ;;
+    *) echo "Invalid"; read -rp "Enter to continue..." _; return ;;
+  esac
+  read -rp "Enter game keyword: " kw
+  if [ -z "$kw" ]; then echo "Empty"; read -rp "Enter to continue..." _; return; fi
+
+  # find matches
+  matches=()
+  local n; n=$(array_len "GAMES_LIST")
+  for ((i=0;i<n;i++)); do
+    g=$(array_get "GAMES_LIST" "$i")
+    if echo "$g" | grep -qi "$kw"; then matches+=("$g"); fi
+  done
+
+  if (( ${#matches[@]} == 0 )); then echo "No matches found."; read -rp "Enter to continue..." _; return; fi
+
+  echo "Matches:"
+  for ((i=0;i<${#matches[@]};i++)); do printf "%2d) %s\n" $((i+1)) "${matches[$i]}"; done
+  echo " 0) Back"
+  read -rp "Pick: " p
+  if [ -z "$p" ] || [ "$p" = "0" ]; then return; fi
+  if ! [[ "$p" =~ ^[0-9]+$ ]]; then echo "Invalid"; read -rp "Enter to continue..." _; return; fi
+  sel=$((p-1))
+  if (( sel < 0 || sel >= ${#matches[@]} )); then echo "Invalid"; read -rp "Enter to continue..." _; return; fi
+  chosen="${matches[$sel]}"
+  echo "Chosen: $chosen"
+
+  # pick country
+  country_tag=$(ask_country_tag)
+  # mode
+  echo "Mode: 1) Best  2) Random"
+  read -rp "Choice: " mm
+  mode="best"; [ "$mm" = "2" ] && mode="random"
+
+  # serve
+  serve_bank_for_country "$bank" "$country_tag" "$mode" 48 46
+  read -rp "Enter to continue..." _
+}
+
+# -------------------------
+# Download DNS menu (special: unblock / streaming)
+# -------------------------
+download_menu_flow() {
+  show_title
+  echo "Download & Streaming DNS"
+  echo "1) Best (sample & choose low-latency)"
+  echo "2) Random"
+  echo "3) Country-specific"
+  echo "0) Back"
+  read -rp "Choice: " c
+  case "$c" in
+    1) serve_bank_for_country "DOWNLOAD_DNS" "Global" "best" 60 46 ;;
+    2) serve_bank_for_country "DOWNLOAD_DNS" "Global" "random" 12 46 ;;
+    3)
+      country_tag=$(ask_country_tag)
+      serve_bank_for_country "DOWNLOAD_DNS" "$country_tag" "best" 60 46
+      ;;
+    0|"") return ;;
+    *) echo "Invalid"; sleep 1 ;;
+  esac
+  read -rp "Enter to continue..." _
+}
+
+# -------------------------
+# Final Main Menu (wires everything)
+# -------------------------
+main_menu_final() {
+  while true; do
+    show_title
+    echo "1) Mobile Games"
+    echo "2) PC Games"
+    echo "3) Console Games"
+    echo "4) Download / Streaming DNS"
+    echo "5) Generate DNS (interactive)"
+    echo "6) Search Game"
+    echo "0) Exit"
+    read -rp "Choose: " op
+    case "$op" in
+      1) menu_game_mobile ;;
+      2) menu_game_pc ;;
+      3) menu_game_console ;;
+      4) download_menu_flow ;;
+      5) generate_menu ;;   # from Part 7
+      6) search_game_flow ;;
+      0) echo "Bye."; exit 0 ;;
+      *) echo "Invalid"; sleep 1 ;;
+    esac
+  done
+}
+
+# If script is sourced and main_menu_final exists, don't auto-run; else run
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  main_menu_final
+fi
