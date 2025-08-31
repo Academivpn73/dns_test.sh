@@ -1,12 +1,16 @@
 #!/bin/bash
 # =========================================
-# DNS Gamer Script — Full Edition (Termux)
+# DNS Gamer Script — Full Edition (Termux / Bash)
 # - Menus: Mobile / PC / Console / Download
 # - New: DNS Generate (New), Search Game (New), Ping DNS (New), Rebuild Registry (New)
 # - Auto DNS Registry: builds >=200 real DNS per game section from online sources + seeds
 # - Auto Ping: keeps only DNS with latency <46ms; else fallback to DNS Generate
 # - Output English; menu highlights; green (New) labels
 # =========================================
+
+set -o errexit
+set -o nounset
+set -o pipefail
 
 # ---------- Colors ----------
 green="\e[32m"; blue="\e[34m"; cyan="\e[36m"; yellow="\e[33m"; red="\e[31m"; bold="\e[1m"; reset="\e[0m"
@@ -22,29 +26,27 @@ LOG_FILE="$CACHE_DIR/build.log"
 mkdir -p "$CACHE_DIR"
 
 # ---------- Safe read ----------
-safe_read(){ local var=$1; local input; read input || true; eval $var="'$input'"; }
+safe_read(){ local __var=$1; local __val; IFS= read -r __val || __val=""; printf -v "$__var" "%s" "$__val"; }
 
 # ---------- Dependency Check ----------
-need_cmds=(awk sed grep sort uniq tr curl timeout ping nc)
+need_cmds=(awk sed grep sort uniq tr curl timeout ping nc head shuf bc)
 missing=()
 for c in "${need_cmds[@]}"; do command -v "$c" >/dev/null 2>&1 || missing+=("$c"); done
 if [ ${#missing[@]} -gt 0 ]; then
   echo -e "${red}Missing packages:${reset} ${missing[*]}"
-  echo -e "${yellow}On Termux run:${reset} pkg install curl busybox netcat-openbsd"
-  echo -e "${yellow}busybox provides: awk/sed/grep/sort/uniq/tr/timeout${reset}"
+  echo -e "${yellow}On Termux run:${reset} pkg install curl busybox netcat-openbsd coreutils grep sed awk bc"
   exit 1
 fi
 
 # ---------- Utilities ----------
 ts(){ date +"%Y-%m-%d %H:%M:%S"; }
-
 log(){ echo "[$(ts)] $*" >> "$LOG_FILE"; }
 
 # returns ms or 9999 if fail
 check_ping(){
   local ip=$1
-  # One ICMP packet, 1s deadline
   local result
+  # Use ping with timeout 1s; adapt for different ping outputs
   result=$(ping -c 1 -W 1 "$ip" 2>/dev/null | awk -F'time=' '/time=/{print $2; exit}' | awk '{print $1}')
   if [ -n "$result" ]; then echo "$result"; else echo 9999; fi
 }
@@ -59,18 +61,19 @@ check_udp53(){
 # format pair
 print_dns_pair(){
   local pair="$1"
-  local p1=$(echo "$pair" | awk '{print $1}')
-  local p2=$(echo "$pair" | awk '{print $2}')
+  local p1 p2
+  p1=$(echo "$pair" | awk '{print $1}')
+  p2=$(echo "$pair" | awk '{print $2}')
   echo -e "${green}Primary:${reset} $p1"
   echo -e "${green}Secondary:${reset} $p2"
 }
 
 # Generate random IPv4/IPv6 (fallback)
-generate_ipv4(){ echo "$((RANDOM%223+1)).$((RANDOM%255)).$((RANDOM%255)).$((RANDOM%255))"; }
+generate_ipv4(){ printf "%d.%d.%d.%d\n" "$((RANDOM%223+1))" "$((RANDOM%256))" "$((RANDOM%256))" "$((RANDOM%256))"; }
 generate_ipv6(){ hexdump -n16 -e '8/2 "%x:"' /dev/urandom | sed 's/:$//'; }
 
 # ---------- Base Seed DNS (real, curated) ----------
-# These seeds ensure we always have a valid start even offline.
+# Seeds: well-known public resolvers + regional ISP resolvers (baseline)
 SEED_GLOBAL=$(
 cat <<'EOF'
 1.1.1.1
@@ -99,28 +102,20 @@ cat <<'EOF'
 208.76.51.51
 209.244.0.3
 209.244.0.4
-1.1.1.2
-1.0.0.2
-1.1.1.3
-1.0.0.3
-94.140.14.15
-94.140.15.16
-176.103.130.130
-176.103.130.131
-185.222.222.222
-185.184.222.222
 80.80.80.80
 80.80.81.81
 129.250.35.250
 129.250.35.251
-64.233.217.2
-64.233.217.3
-1.12.12.12
-120.53.53.53
+4.2.2.1
+4.2.2.2
+8.26.56.26
+8.20.247.20
+199.85.126.10
+199.85.127.10
 EOF
 )
 
-# Regional seeds (real public resolvers / ISPs — baseline)
+# Regional seeds (public resolvers / ISP baseline)
 SEED_IR=$(
 cat <<'EOF'
 178.22.122.100
@@ -158,8 +153,6 @@ cat <<'EOF'
 213.14.227.13
 193.140.100.200
 193.140.100.201
-62.248.80.141
-212.154.100.18
 EOF
 )
 
@@ -173,10 +166,6 @@ cat <<'EOF'
 217.17.32.3
 213.5.169.1
 213.5.169.2
-82.147.192.10
-82.147.192.20
-94.96.0.1
-94.96.0.2
 EOF
 )
 
@@ -190,40 +179,22 @@ cat <<'EOF'
 217.165.1.2
 213.42.20.20
 213.42.20.21
-86.96.255.2
-86.96.255.3
 EOF
 )
 
-# Extra EU/US seeds
 SEED_EUUS=$(
 cat <<'EOF'
 62.210.16.6
 62.210.16.7
-9.9.9.10
-149.112.112.10
 74.82.42.42
-4.2.2.1
-4.2.2.2
-4.2.2.3
-4.2.2.4
-4.2.2.5
-4.2.2.6
-1.0.0.10
-1.1.1.10
-8.26.56.26
-8.20.247.20
-199.85.126.10
-199.85.127.10
-145.100.185.15
-145.100.185.16
+64.233.217.2
+64.233.217.3
 204.194.232.200
 204.194.234.200
 EOF
 )
 
-# ---------- Online Sources (will try; safe if blocked) ----------
-# Each URL should return a list of IPs (one per line) or something we can grep for IPv4s
+# ---------- Online Sources (attempts; safe to fail) ----------
 DNS_SOURCES=(
 "https://public-dns.info/nameservers.txt"
 "https://raw.githubusercontent.com/trickest/resolvers/main/resolvers.txt"
@@ -233,7 +204,6 @@ DNS_SOURCES=(
 
 # ---------- Build Pool (collect -> validate -> ping -> pair) ----------
 # build_pool <section> <cache_file>
-# section: mobile | pc | console | download
 build_pool(){
   local section="$1"
   local cache="$2"
@@ -252,16 +222,14 @@ build_pool(){
   echo "$SEED_SA"       >> "$tmp_all"
   echo "$SEED_AE"       >> "$tmp_all"
 
-  # Section-specific extra seeds (optional)
+  # Section-specific extra seeds
   if [ "$section" = "mobile" ]; then
-    # mobile focus: add a few known gamer-friendly edges again
     echo "$SEED_GLOBAL" >> "$tmp_all"
   elif [ "$section" = "pc" ]; then
     echo "$SEED_EUUS" >> "$tmp_all"
   elif [ "$section" = "console" ]; then
     echo "$SEED_GLOBAL" >> "$tmp_all"
   elif [ "$section" = "download" ]; then
-    # download/unblock set
     cat <<EOF >> "$tmp_all"
 185.51.200.2
 178.22.122.100
@@ -280,30 +248,31 @@ build_pool(){
 EOF
   fi
 
-  # 2) try fetching public lists online
+  # 2) fetch public lists (best-effort)
   for url in "${DNS_SOURCES[@]}"; do
     log "Fetch: $url"
-    content=$(curl -m 6 -fsSL "$url" 2>/dev/null | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
+    content=$(curl -m 6 -fsSL "$url" 2>/dev/null | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' || true)
     if [ -n "$content" ]; then
       echo "$content" >> "$tmp_all"
     fi
   done
 
-  # 3) normalize + dedup + sanitize (IPv4 only, skip private ranges)
+  # 3) normalize + dedup + sanitize (IPv4 only, skip private)
   cat "$tmp_all" | \
   grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | \
   awk -F. '($1<=223)&&($1!=10)&&!(($1==172)&&($2>=16&&$2<=31))&&($1!=192||$2!=168)' | \
   sed 's/ *$//' | sort -u > "$tmp_ok"
 
-  # 4) quick UDP/53 validation + latency filter (<46ms)
+  # 4) UDP/53 validation + latency filter (<46ms initially)
   local count_ok=0
   local validated="$CACHE_DIR/${section}.validated.tmp"
   : > "$validated"
 
-  while read -r ip; do
+  # Shuffle to avoid bias
+  mapfile -t cand < <(shuf "$tmp_ok" || cat "$tmp_ok")
+  for ip in "${cand[@]}"; do
     check_udp53 "$ip" || continue
     ms=$(check_ping "$ip")
-    # keep only <46ms (strict). if too few remain we’ll soften later
     if [ "$ms" != "9999" ]; then
       islow=$(echo "$ms < 46" | bc)
       if [ "$islow" -eq 1 ]; then
@@ -311,13 +280,13 @@ EOF
         count_ok=$((count_ok+1))
       fi
     fi
-    # cap validation to avoid very long runs
-    if [ $count_ok -ge 500 ]; then break; fi
-  done < "$tmp_ok"
+    # safety cap
+    if [ $count_ok -ge 600 ]; then break; fi
+  done
 
-  # if too few low-latency were found, allow up to 80ms as a fallback to reach 200
+  # fallback: if too few, accept up to 80ms to reach enough candidates
   if [ $count_ok -lt 220 ]; then
-    while read -r ip; do
+    for ip in "${cand[@]}"; do
       grep -q "^$ip " "$validated" && continue
       check_udp53 "$ip" || continue
       ms=$(check_ping "$ip")
@@ -328,53 +297,49 @@ EOF
           count_ok=$((count_ok+1))
         fi
       fi
-      if [ $count_ok -ge 600 ]; then break; fi
-    done < "$tmp_ok"
+      if [ $count_ok -ge 1200 ]; then break; fi
+    done
   fi
 
-  # sort by latency asc, take top 420 IPs for pairing slack
+  # sort by latency asc, take top 420 IPs to produce pairs (diversity)
   sort -k2 -n "$validated" | awk '{print $1}' | head -n 420 > "$tmp_ok"
 
-  # 5) make pairs (primary/secondary). We’ll slide a window to create robust pairs.
-  # ensure at least 200 pairs; if less, we’ll pad from seeds.
+  # 5) create pairs (primary secondary)
   mapfile -t arr < "$tmp_ok"
   local n=${#arr[@]}
   if [ $n -lt 4 ]; then
-    # fallback: heavy seed pairing
     arr=(1.1.1.1 1.0.0.1 8.8.8.8 8.8.4.4 9.9.9.9 149.112.112.112 94.140.14.14 94.140.15.15)
     n=${#arr[@]}
   fi
 
-  # pair by i with i+1 (wrap), then interleave with i with i+2 for diversity
   P=0
   for ((i=0;i<n-1;i++)); do
     echo "${arr[$i]} ${arr[$i+1]}" >> "$tmp_pairs"
     P=$((P+1))
-    if [ $P -ge 240 ]; then break; fi
+    if [ $P -ge 420 ]; then break; fi
   done
-  if [ $P -lt 240 ]; then
+  if [ $P -lt 420 ]; then
     for ((i=0;i<n-2;i++)); do
       echo "${arr[$i]} ${arr[$i+2]}" >> "$tmp_pairs"
       P=$((P+1))
-      if [ $P -ge 400 ]; then break; fi
+      if [ $P -ge 600 ]; then break; fi
     done
   fi
 
-  # If still not enough, pad with robust globals
-  while [ $P -lt 220 ]; do
+  # pad with very stable globals if still insufficient
+  while [ $P -lt 400 ]; do
     echo "1.1.1.1 1.0.0.1" >> "$tmp_pairs"; P=$((P+1))
     echo "8.8.8.8 8.8.4.4" >> "$tmp_pairs"; P=$((P+1))
     echo "9.9.9.9 149.112.112.112" >> "$tmp_pairs"; P=$((P+1))
-    echo "208.67.222.222 208.67.220.220" >> "$tmp_pairs"; P=$((P+1))
+    echo "94.140.14.14 94.140.15.15" >> "$tmp_pairs"; P=$((P+1))
   done
 
-  # take exactly 200 pairs -> cache
+  # store exactly 200 pairs
   head -n 200 "$tmp_pairs" | awk '{print $1" "$2}' > "$cache"
   log "Pool for $section built: $(wc -l < "$cache") pairs"
 }
 
 # ---------- Best DNS selector ----------
-# scans a cache of pairs; pings primary; returns best pair or generated fallback
 get_best_dns_from_cache(){
   local cache="$1"
   if [ ! -s "$cache" ]; then echo ""; return; fi
@@ -392,6 +357,7 @@ get_best_dns_from_cache(){
   if [ -n "$best_pair" ]; then
     echo "$best_pair"
   else
+    # no low-latency found -> fallback generate
     echo "$(generate_ipv4) $(generate_ipv4)"
   fi
 }
@@ -411,7 +377,7 @@ rebuild_all_registries(){
   echo -e "${cyan}PC:${reset} $(wc -l < "$PC_CACHE") pairs"
   echo -e "${cyan}Console:${reset} $(wc -l < "$CONSOLE_CACHE") pairs"
   echo -e "${cyan}Download:${reset} $(wc -l < "$DOWNLOAD_CACHE") pairs"
-  echo -e "\nPress Enter..."; read
+  echo -e "\nPress Enter..."; read -r _
 }
 
 # ---------- Games Lists (70 each) ----------
@@ -497,8 +463,7 @@ special_dns_console["Escape from Tarkov Console"]="156.154.70.5 156.154.71.5"
 
 # ---------- Menu Helpers ----------
 show_list_menu(){
-  local title="$1"; shift
-  local -n arr=$1
+  local title="$1"; local -n arr="$2"
   clear
   echo -e "${bold}${green}${title}${reset}"
   echo -e "${cyan}Select (0 to back):${reset}"
@@ -510,17 +475,18 @@ show_list_menu(){
 # ---------- Section Menus ----------
 mobile_dns_menu(){
   while true; do
-    show_list_menu "Mobile Games DNS" mobile_games; safe_read sel
-    case "$sel" in
+    show_list_menu "Mobile Games DNS" mobile_games
+    safe_read sel
+    case "${sel:-}" in
       0) return ;;
       *)
-        if [[ "$sel" =~ ^[0-9]+$ ]] && [ $sel -ge 1 ] && [ $sel -le ${#mobile_games[@]} ]; then
+        if [[ "$sel" =~ ^[0-9]+$ ]] && [ "$sel" -ge 1 ] && [ "$sel" -le "${#mobile_games[@]}" ]; then
           local game="${mobile_games[$((sel-1))]}"
           clear; echo -e "${cyan}Selected Game:${reset} $game"
-          if [ -n "${special_dns_mobile[$game]}" ]; then
+          if [ -n "${special_dns_mobile[$game]:-}" ]; then
             echo -e "${yellow}Special DNS (region-fix):${reset}"; print_dns_pair "${special_dns_mobile[$game]}"
           else
-            if [ ! -s "$MOBILE_CACHE" ] || [ $(wc -l < "$MOBILE_CACHE") -lt 200 ]; then
+            if [ ! -s "$MOBILE_CACHE" ] || [ "$(wc -l < "$MOBILE_CACHE")" -lt 200 ]; then
               echo -e "${yellow}Building Mobile DNS Registry (first run)...${reset}"
               build_pool "mobile" "$MOBILE_CACHE"
             fi
@@ -528,7 +494,7 @@ mobile_dns_menu(){
             best=$(get_best_dns_from_cache "$MOBILE_CACHE")
             print_dns_pair "$best"
           fi
-          echo -e "\n${green}Press Enter...${reset}"; read
+          echo -e "\n${green}Press Enter...${reset}"; read -r _
         else echo -e "${red}Invalid input!${reset}"; sleep 1; fi
         ;;
     esac
@@ -537,17 +503,18 @@ mobile_dns_menu(){
 
 pc_dns_menu(){
   while true; do
-    show_list_menu "PC Games DNS" pc_games; safe_read sel
-    case "$sel" in
+    show_list_menu "PC Games DNS" pc_games
+    safe_read sel
+    case "${sel:-}" in
       0) return ;;
       *)
-        if [[ "$sel" =~ ^[0-9]+$ ]] && [ $sel -ge 1 ] && [ $sel -le ${#pc_games[@]} ]; then
+        if [[ "$sel" =~ ^[0-9]+$ ]] && [ "$sel" -ge 1 ] && [ "$sel" -le "${#pc_games[@]}" ]; then
           local game="${pc_games[$((sel-1))]}"
           clear; echo -e "${cyan}Selected Game:${reset} $game"
-          if [ -n "${special_dns_pc[$game]}" ]; then
+          if [ -n "${special_dns_pc[$game]:-}" ]; then
             echo -e "${yellow}Special DNS (region-fix):${reset}"; print_dns_pair "${special_dns_pc[$game]}"
           else
-            if [ ! -s "$PC_CACHE" ] || [ $(wc -l < "$PC_CACHE") -lt 200 ]; then
+            if [ ! -s "$PC_CACHE" ] || [ "$(wc -l < "$PC_CACHE")" -lt 200 ]; then
               echo -e "${yellow}Building PC DNS Registry (first run)...${reset}"
               build_pool "pc" "$PC_CACHE"
             fi
@@ -555,7 +522,7 @@ pc_dns_menu(){
             best=$(get_best_dns_from_cache "$PC_CACHE")
             print_dns_pair "$best"
           fi
-          echo -e "\n${green}Press Enter...${reset}"; read
+          echo -e "\n${green}Press Enter...${reset}"; read -r _
         else echo -e "${red}Invalid input!${reset}"; sleep 1; fi
         ;;
     esac
@@ -564,17 +531,18 @@ pc_dns_menu(){
 
 console_dns_menu(){
   while true; do
-    show_list_menu "Console Games DNS" console_games; safe_read sel
-    case "$sel" in
+    show_list_menu "Console Games DNS" console_games
+    safe_read sel
+    case "${sel:-}" in
       0) return ;;
       *)
-        if [[ "$sel" =~ ^[0-9]+$ ]] && [ $sel -ge 1 ] && [ $sel -le ${#console_games[@]} ]; then
+        if [[ "$sel" =~ ^[0-9]+$ ]] && [ "$sel" -ge 1 ] && [ "$sel" -le "${#console_games[@]}" ]; then
           local game="${console_games[$((sel-1))]}"
           clear; echo -e "${cyan}Selected Game:${reset} $game"
-          if [ -n "${special_dns_console[$game]}" ]; then
+          if [ -n "${special_dns_console[$game]:-}" ]; then
             echo -e "${yellow}Special DNS (region-fix):${reset}"; print_dns_pair "${special_dns_console[$game]}"
           else
-            if [ ! -s "$CONSOLE_CACHE" ] || [ $(wc -l < "$CONSOLE_CACHE") -lt 200 ]; then
+            if [ ! -s "$CONSOLE_CACHE" ] || [ "$(wc -l < "$CONSOLE_CACHE")" -lt 200 ]; then
               echo -e "${yellow}Building Console DNS Registry (first run)...${reset}"
               build_pool "console" "$CONSOLE_CACHE"
             fi
@@ -582,7 +550,7 @@ console_dns_menu(){
             best=$(get_best_dns_from_cache "$CONSOLE_CACHE")
             print_dns_pair "$best"
           fi
-          echo -e "\n${green}Press Enter...${reset}"; read
+          echo -e "\n${green}Press Enter...${reset}"; read -r _
         else echo -e "${red}Invalid input!${reset}"; sleep 1; fi
         ;;
     esac
@@ -593,22 +561,22 @@ console_dns_menu(){
 download_dns_menu(){
   clear
   echo -e "${bold}${green}Download / Anti-censorship DNS${reset}"
-  if [ ! -s "$DOWNLOAD_CACHE" ] || [ $(wc -l < "$DOWNLOAD_CACHE") -lt 50 ]; then
+  if [ ! -s "$DOWNLOAD_CACHE" ] || [ "$(wc -l < "$DOWNLOAD_CACHE")" -lt 50 ]; then
     echo -e "${yellow}Building Download DNS Registry...${reset}"
     build_pool "download" "$DOWNLOAD_CACHE"
   fi
   echo -e "${cyan}Choosing best download DNS (<46ms)...${reset}"
   best=$(get_best_dns_from_cache "$DOWNLOAD_CACHE")
   print_dns_pair "$best"
-  echo -e "\n${green}Press Enter...${reset}"; read
+  echo -e "\n${green}Press Enter...${reset}"; read -r _
 }
 
 # ---------- DNS Generate (New) ----------
 dns_generate_menu(){
   clear
-  echo -e "${cyan}Generated IPv4:${reset} $(generate_ipv4)"
-  echo -e "${cyan}Generated IPv6:${reset} $(generate_ipv6)"
-  echo -e "\n${green}Press Enter...${reset}"; read
+  echo -e "${cyan}Generated IPv4 (fallback):${reset} $(generate_ipv4)"
+  echo -e "${cyan}Generated IPv6 (fallback):${reset} $(generate_ipv6)"
+  echo -e "\n${green}Press Enter...${reset}"; read -r _
 }
 
 # ---------- Search Game (New) ----------
@@ -616,7 +584,9 @@ search_game_menu(){
   clear
   echo -ne "${green}Enter game name or device (e.g., 'FC25 PS5'):${reset} "
   safe_read gname
-  [ -z "$gname" ] && echo -e "${red}Empty input!${reset}" && sleep 1 && return
+  if [ -z "${gname:-}" ]; then
+    echo -e "${red}Empty input!${reset}"; sleep 1; return
+  fi
 
   local found_section=""; local found_game=""
   # mobile
@@ -640,44 +610,44 @@ search_game_menu(){
     echo -e "${cyan}Found in ${found_section}:${reset} $found_game"
     case "$found_section" in
       Mobile)
-        if [ -n "${special_dns_mobile[$found_game]}" ]; then
+        if [ -n "${special_dns_mobile[$found_game]:-}" ]; then
           print_dns_pair "${special_dns_mobile[$found_game]}"
         else
           [ ! -s "$MOBILE_CACHE" ] && build_pool "mobile" "$MOBILE_CACHE"
           best=$(get_best_dns_from_cache "$MOBILE_CACHE"); print_dns_pair "$best"
         fi
-      ;;
+        ;;
       PC)
-        if [ -n "${special_dns_pc[$found_game]}" ]; then
+        if [ -n "${special_dns_pc[$found_game]:-}" ]; then
           print_dns_pair "${special_dns_pc[$found_game]}"
         else
           [ ! -s "$PC_CACHE" ] && build_pool "pc" "$PC_CACHE"
           best=$(get_best_dns_from_cache "$PC_CACHE"); print_dns_pair "$best"
         fi
-      ;;
+        ;;
       Console)
-        if [ -n "${special_dns_console[$found_game]}" ]; then
+        if [ -n "${special_dns_console[$found_game]:-}" ]; then
           print_dns_pair "${special_dns_console[$found_game]}"
         else
           [ ! -s "$CONSOLE_CACHE" ] && build_pool "console" "$CONSOLE_CACHE"
           best=$(get_best_dns_from_cache "$CONSOLE_CACHE"); print_dns_pair "$best"
         fi
-      ;;
+        ;;
     esac
-  } else
+  else
     echo -e "${yellow}Game not found in lists!${reset}"
     echo -e "${cyan}Choosing best generic DNS (<46ms) from Mobile pool...${reset}"
     [ ! -s "$MOBILE_CACHE" ] && build_pool "mobile" "$MOBILE_CACHE"
     best=$(get_best_dns_from_cache "$MOBILE_CACHE"); print_dns_pair "$best"
   fi
-  echo -e "\n${green}Press Enter...${reset}"; read
+  echo -e "\n${green}Press Enter...${reset}"; read -r _
 }
 
 # ---------- Ping DNS (New) ----------
 ping_dns_menu(){
   clear
   echo -ne "${green}Enter DNS IP:${reset} "; safe_read ip
-  if ! echo "$ip" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+  if ! printf "%s" "$ip" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
     echo -e "${red}Invalid IPv4!${reset}"; sleep 1; return
   fi
   if ! check_udp53 "$ip"; then
@@ -689,7 +659,7 @@ ping_dns_menu(){
   else
     echo -e "${cyan}Ping:${reset} $res ms"
   fi
-  echo -e "\n${green}Press Enter...${reset}"; read
+  echo -e "\n${green}Press Enter...${reset}"; read -r _
 }
 
 # ---------- Main Menu ----------
@@ -709,7 +679,7 @@ main_menu(){
     echo -ne "\n${green}Choose an option:${reset} "
     safe_read choice
 
-    case "$choice" in
+    case "${choice:-}" in
       1) mobile_dns_menu ;;
       2) pc_dns_menu ;;
       3) console_dns_menu ;;
@@ -727,7 +697,7 @@ main_menu(){
 # ---------- First-run: ensure registries exist (optional lazy build) ----------
 for f in "$MOBILE_CACHE" "$PC_CACHE" "$CONSOLE_CACHE" "$DOWNLOAD_CACHE"; do
   if [ ! -s "$f" ]; then
-    echo "# empty" > "$f"
+    : > "$f"
   fi
 done
 
