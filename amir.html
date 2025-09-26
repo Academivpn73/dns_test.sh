@@ -46,14 +46,36 @@
         }
 
         .title {
-            font-size: 3rem;
-            font-weight: bold;
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            font-size: 3.5rem;
+            font-weight: 900;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #ffd93d, #6c5ce7);
+            background-size: 300% 300%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 10px;
-            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            text-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            animation: titleGlow 3s ease-in-out infinite, gradientShift 4s ease-in-out infinite;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { 
+                transform: scale(1) rotateX(0deg);
+                filter: drop-shadow(0 0 10px rgba(78, 205, 196, 0.5));
+            }
+            50% { 
+                transform: scale(1.05) rotateX(5deg);
+                filter: drop-shadow(0 0 20px rgba(255, 107, 107, 0.8));
+            }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         .contact-buttons {
@@ -113,22 +135,35 @@
 
         .music-control {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 15px;
+            right: 15px;
             z-index: 1000;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            border-radius: 50px;
-            padding: 10px 20px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
             color: white;
             cursor: pointer;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            animation: musicPulse 2s ease-in-out infinite;
         }
 
         .music-control:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
+            background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        @keyframes musicPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .tabs {
@@ -364,7 +399,7 @@
 
         @media (max-width: 768px) {
             .title {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
             
             .tabs {
@@ -384,18 +419,31 @@
             .radio-group {
                 flex-direction: column;
             }
+
+            .music-control {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                top: 10px;
+                right: 10px;
+            }
+
+            .contact-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
 <body>
 
-    <button class="music-control" onclick="toggleMusic()">🎵 موزیک</button>
+    <button class="music-control" onclick="toggleMusic()">🎵</button>
     
 
 
     <div class="container">
         <div class="header">
-            <h1 class="title">DNS Gaming Hub</h1>
+            <h1 class="title">Academi DNS Best</h1>
             <div class="contact-buttons">
                 <div class="telegram-box">
                     <a href="https://t.me/Academii73" target="_blank" rel="noopener noreferrer" class="telegram-link">
@@ -578,67 +626,94 @@
 
 
 
+        let audioContext;
+        let musicInterval;
+        let currentNote = 0;
+
         function toggleMusic() {
             const btn = document.querySelector('.music-control');
             
             if (isMusicPlaying) {
-                btn.textContent = '🎵 موزیک';
+                // Stop music
+                if (musicInterval) {
+                    clearInterval(musicInterval);
+                    musicInterval = null;
+                }
+                if (audioContext) {
+                    audioContext.close();
+                    audioContext = null;
+                }
+                btn.innerHTML = '🎵';
+                btn.style.animation = 'musicPulse 2s ease-in-out infinite';
                 isMusicPlaying = false;
             } else {
+                // Start music
                 try {
-                    // Create an iframe to embed the Aparat video (audio only)
-                    let audioFrame = document.getElementById('aparatAudio');
-                    if (!audioFrame) {
-                        audioFrame = document.createElement('iframe');
-                        audioFrame.id = 'aparatAudio';
-                        audioFrame.src = 'https://www.aparat.com/video/video_embed/videohash/m51e6za/vt/frame';
-                        audioFrame.style.position = 'fixed';
-                        audioFrame.style.top = '-1000px';
-                        audioFrame.style.left = '-1000px';
-                        audioFrame.style.width = '1px';
-                        audioFrame.style.height = '1px';
-                        audioFrame.style.opacity = '0';
-                        audioFrame.style.pointerEvents = 'none';
-                        audioFrame.allow = 'autoplay';
-                        document.body.appendChild(audioFrame);
-                    }
+                    // Create audio context
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     
-                    // Also create backup Web Audio melody
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const frequencies = [440, 523, 659, 784, 880, 1047, 1319];
-                    let noteIndex = 0;
+                    // Calm nature-inspired melody - peaceful and relaxing
+                    const melody = [
+                        { freq: 261.63, duration: 0.8 }, // C4 - gentle start
+                        { freq: 293.66, duration: 0.6 }, // D4
+                        { freq: 329.63, duration: 0.8 }, // E4
+                        { freq: 349.23, duration: 0.6 }, // F4
+                        { freq: 392.00, duration: 1.0 }, // G4 - like wind
+                        { freq: 349.23, duration: 0.8 }, // F4
+                        { freq: 329.63, duration: 0.6 }, // E4
+                        { freq: 293.66, duration: 0.8 }, // D4
+                        { freq: 261.63, duration: 1.2 }, // C4 - peaceful end
+                        { freq: 220.00, duration: 0.8 }, // A3 - like water drops
+                        { freq: 246.94, duration: 0.6 }, // B3
+                        { freq: 261.63, duration: 1.4 }, // C4 - nature's breath
+                    ];
                     
-                    function playBackupMelody() {
-                        if (!isMusicPlaying) return;
-                        
+                    function playNote(frequency, duration, startTime) {
                         const oscillator = audioContext.createOscillator();
                         const gainNode = audioContext.createGain();
                         
                         oscillator.connect(gainNode);
                         gainNode.connect(audioContext.destination);
                         
-                        oscillator.frequency.setValueAtTime(frequencies[noteIndex], audioContext.currentTime);
-                        oscillator.type = 'sine';
-                        gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+                        oscillator.frequency.setValueAtTime(frequency, startTime);
+                        oscillator.type = 'sine'; // Soft, natural sound like wind
                         
-                        oscillator.start();
-                        oscillator.stop(audioContext.currentTime + 0.8);
+                        gainNode.gain.setValueAtTime(0, startTime);
+                        gainNode.gain.linearRampToValueAtTime(0.05, startTime + 0.1); // Gentle fade in
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.8); // Soft fade out
                         
-                        noteIndex = (noteIndex + 1) % frequencies.length;
-                        
-                        if (isMusicPlaying) {
-                            setTimeout(playBackupMelody, 1000);
-                        }
+                        oscillator.start(startTime);
+                        oscillator.stop(startTime + duration);
                     }
                     
-                    btn.textContent = '🔇 توقف موزیک';
+                    function playMelody() {
+                        if (!isMusicPlaying) return;
+                        
+                        let currentTime = audioContext.currentTime;
+                        melody.forEach((note, index) => {
+                            playNote(note.freq, note.duration, currentTime);
+                            currentTime += note.duration + 0.3; // Longer pauses for peaceful feeling
+                        });
+                        
+                        // Schedule next melody with longer break (like nature's rhythm)
+                        setTimeout(() => {
+                            if (isMusicPlaying) playMelody();
+                        }, (currentTime - audioContext.currentTime + 2) * 1000); // 2 second pause between melodies
+                    }
+                    
+                    btn.innerHTML = '🔇';
+                    btn.style.animation = 'musicPulse 0.5s ease-in-out infinite';
                     isMusicPlaying = true;
-                    playBackupMelody();
+                    
+                    // Start playing
+                    playMelody();
                     
                 } catch (e) {
-                    console.log('Audio not supported');
-                    btn.textContent = '🎵 موزیک';
+                    console.log('Audio not supported:', e);
+                    btn.innerHTML = '❌';
+                    setTimeout(() => {
+                        btn.innerHTML = '🎵';
+                    }, 2000);
                 }
             }
         }
@@ -845,5 +920,5 @@
             }, 500);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9853044f465539d3',t:'MTc1ODg5MjM4Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98531c0165e69a0f',t:'MTc1ODg5MzM1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
