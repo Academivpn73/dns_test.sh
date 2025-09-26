@@ -3,95 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DNS Gaming - Telegram: @Academi_vpn</title>
+    <title>DNS Gaming Hub - Telegram: @Academi_vpn</title>
     <style>
         body {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-image: url('https://raw.githubusercontent.com/Academivpn73/Hiddfiy_app/main/Hiddfiy_P.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
+            transition: all 0.3s ease;
             overflow-x: hidden;
-            transition: all 0.3s ease;
+            position: relative;
         }
 
-        body.dark-mode {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-        }
-
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-
-        .theme-toggle:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
-        }
-
-        .background-animation {
+        body::before {
+            content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 0;
         }
 
-        .floating-shapes {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        .shape {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .shape:nth-child(1) {
-            width: 80px;
-            height: 80px;
-            top: 20%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .shape:nth-child(2) {
-            width: 120px;
-            height: 120px;
-            top: 60%;
-            left: 80%;
-            animation-delay: 2s;
-        }
-
-        .shape:nth-child(3) {
-            width: 60px;
-            height: 60px;
-            top: 80%;
-            left: 20%;
-            animation-delay: 4s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
+        .dark-mode::before {
+            background: rgba(0, 0, 0, 0.7);
         }
 
         .container {
@@ -105,213 +46,267 @@
         .header {
             text-align: center;
             margin-bottom: 40px;
-            color: white;
+            animation: fadeInDown 1s ease-out;
         }
 
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
-            background-size: 300% 300%;
+        .title {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            animation: gradientShift 3s ease-in-out infinite;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+        .telegram-box {
+            display: inline-block;
+            background: linear-gradient(45deg, #0088cc, #229ed9);
+            padding: 15px 25px;
+            border-radius: 25px;
+            margin: 20px 0;
+            box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3);
+            animation: pulse 2s infinite;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .telegram-box:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 35px rgba(0, 136, 204, 0.5);
         }
 
         .telegram-link {
-            font-size: 1.2rem;
-            color: #00d4aa;
+            color: white;
             text-decoration: none;
+            font-size: 1.2rem;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            margin-bottom: 40px;
+        .telegram-link:hover {
+            color: #e8f4fd;
         }
 
-        .option-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
+        @keyframes pulse {
+            0% { box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3); }
+            50% { box-shadow: 0 8px 35px rgba(0, 136, 204, 0.6); }
+            100% { box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3); }
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            color: white;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         }
 
-        .option-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
         }
 
-        .option-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transition: left 0.5s;
+        .music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
         }
 
-        .option-card:hover::before {
-            left: 100%;
+        .music-control:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
         }
 
-        .option-icon {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            text-align: center;
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .gaming-icon { color: #ff6b6b; }
-        .download-icon { color: #4ecdc4; }
-        .ping-icon { color: #45b7d1; }
-
-        .option-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            text-align: center;
-            color: #333;
+        .tab {
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-weight: 600;
         }
 
-        .option-description {
-            color: #666;
-            text-align: center;
-            line-height: 1.6;
+        .tab:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
         }
 
-        .content-section {
-            background: rgba(255, 255, 255, 0.95);
+        .tab.active {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border-color: transparent;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .content {
+            background: rgba(255,255,255,0.1);
             border-radius: 20px;
             padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
-            animation: slideIn 0.5s ease;
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: fadeInUp 0.6s ease-out;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
         }
 
         .form-group {
             margin-bottom: 20px;
         }
 
-        .form-label {
+        .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: bold;
-            color: #333;
+            color: white;
+            font-weight: 600;
         }
 
-        .form-select, .form-input {
+        .form-group select, .form-group input {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
+            padding: 12px 15px;
+            border: 2px solid rgba(255,255,255,0.2);
             border-radius: 10px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
         }
 
-        .form-select:focus, .form-input:focus {
+        .form-group select:focus, .form-group input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+        }
+
+        .form-group select option {
+            background: #2c3e50;
+            color: white;
         }
 
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
             border: none;
-            padding: 12px 30px;
+            padding: 12px 25px;
             border-radius: 25px;
-            font-size: 1rem;
+            color: white;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin: 10px 5px;
+            margin: 5px;
         }
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
         }
 
         .dns-result {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
             padding: 20px;
             margin-top: 20px;
-            display: none;
-        }
-
-        .dns-result.show {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            border-left: 4px solid #4ecdc4;
         }
 
         .dns-item {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white;
         }
 
-        .ping-status {
-            display: inline-block;
-            padding: 4px 12px;
+        .dns-item:last-child {
+            border-bottom: none;
+        }
+
+        .ping-indicator {
+            padding: 5px 10px;
             border-radius: 15px;
-            font-size: 0.9rem;
+            font-size: 12px;
             font-weight: bold;
         }
 
-        .ping-good { background: #d4edda; color: #155724; }
-        .ping-medium { background: #fff3cd; color: #856404; }
-        .ping-bad { background: #f8d7da; color: #721c24; }
+        .ping-good { background: #2ecc71; color: white; }
+        .ping-medium { background: #f39c12; color: white; }
+        .ping-bad { background: #e74c3c; color: white; }
 
-        .back-btn {
-            background: #6c757d;
-            margin-bottom: 20px;
+        .hidden {
+            display: none;
         }
 
         .loading {
             text-align: center;
-            padding: 20px;
+            color: white;
+            font-size: 18px;
+            margin: 20px 0;
         }
 
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border: 3px solid rgba(255,255,255,0.3);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            border-top: 3px solid #4ecdc4;
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 10px;
+        }
+
+        .dns-type-selection {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 20px;
+            height: 20px;
         }
 
         @keyframes spin {
@@ -319,259 +314,347 @@
             100% { transform: rotate(360deg); }
         }
 
-        @media (max-width: 768px) {
-            .options-grid {
-                grid-template-columns: 1fr;
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
             }
-            
-            .header h1 {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ping-test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .custom-dns-test {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .title {
                 font-size: 2rem;
             }
             
+            .tabs {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .tab {
+                width: 80%;
+                text-align: center;
+            }
+            
             .container {
-                padding: 15px;
+                padding: 10px;
+            }
+
+            .radio-group {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <div class="background-animation">
-        <div class="floating-shapes">
-            <div class="shape"></div>
-            <div class="shape"></div>
-            <div class="shape"></div>
-        </div>
-    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙 حالت شب</button>
+    <button class="music-control" onclick="toggleMusic()">🎵 موزیک</button>
+    
+
 
     <div class="container">
         <div class="header">
-            <h1>🎮 DNS Gaming</h1>
-            <a href="https://t.me/Academi_vpn" target="_blank" rel="noopener noreferrer" class="telegram-link">
-                📱 Telegram: @Academi_vpn
-            </a>
-        </div>
-
-        <button class="theme-toggle" onclick="toggleTheme()" title="تغییر حالت">🌙</button>
-
-        <div id="main-menu">
-            <div class="options-grid">
-                <div class="option-card" onclick="showGamingSection()">
-                    <div class="option-icon gaming-icon">🎮</div>
-                    <div class="option-title">DNS گیمینگ</div>
-                    <div class="option-description">
-                        DNS مخصوص بازی‌های آنلاین برای کاهش پینگ و بهبود اتصال
-                    </div>
-                </div>
-
-                <div class="option-card" onclick="showDownloadSection()">
-                    <div class="option-icon download-icon">📥</div>
-                    <div class="option-title">DNS دانلود و تحریم‌شکن</div>
-                    <div class="option-description">
-                        DNS مخصوص دانلود سریع و دور زدن تحریم‌ها
-                    </div>
-                </div>
-
-                <div class="option-card" onclick="showPingSection()">
-                    <div class="option-icon ping-icon">📡</div>
-                    <div class="option-title">تست پینگ DNS</div>
-                    <div class="option-description">
-                        تست خودکار پینگ DNS های مختلف برای یافتن بهترین گزینه
-                    </div>
-                </div>
+            <h1 class="title">DNS Gaming Hub</h1>
+            <div class="telegram-box">
+                <a href="https://t.me/Academi_vpn" target="_blank" rel="noopener noreferrer" class="telegram-link">
+                    <span>📱</span>
+                    <span>Telegram: @Academi_vpn</span>
+                </a>
             </div>
         </div>
 
-        <!-- Gaming Section -->
-        <div id="gaming-section" class="content-section">
-            <button class="btn back-btn" onclick="showMainMenu()">🔙 بازگشت</button>
-            <h2>🎮 DNS گیمینگ</h2>
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('gaming')">🎮 گیمینگ</div>
+            <div class="tab" onclick="showTab('download')">📥 دانلود و تحریم‌شکن</div>
+            <div class="tab" onclick="showTab('ping')">📡 تست پینگ</div>
+        </div>
+
+        <div id="gaming" class="content">
+            <h2 style="color: white; text-align: center; margin-bottom: 30px;">DNS مخصوص گیمینگ</h2>
             
+            <div class="dns-type-selection">
+                <h3 style="color: white; margin-bottom: 15px;">نوع DNS را انتخاب کنید:</h3>
+                <div class="radio-group">
+                    <label class="radio-item">
+                        <input type="radio" name="dnsType" value="global" onchange="updateDNSType()">
+                        <span>DNS های جهانی</span>
+                    </label>
+                    <label class="radio-item">
+                        <input type="radio" name="dnsType" value="generate" onchange="updateDNSType()">
+                        <span>تولید DNS ایرانی</span>
+                    </label>
+                </div>
+            </div>
+
             <div class="form-group">
-                <label class="form-label">نوع دستگاه:</label>
-                <select id="device-select" class="form-select" onchange="updateGames()">
+                <label>نوع دستگاه را انتخاب کنید:</label>
+                <select id="deviceSelect" onchange="updateGames()">
                     <option value="">انتخاب کنید...</option>
+                    <option value="mobile">موبایل (Android/iOS)</option>
                     <option value="pc">کامپیوتر (PC)</option>
-                    <option value="mobile">موبایل</option>
                     <option value="console">کنسول (PS/Xbox)</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label class="form-label">بازی:</label>
-                <select id="game-select" class="form-select">
+                <label>بازی مورد نظر را انتخاب کنید:</label>
+                <select id="gameSelect" onchange="enableDNSCount()">
                     <option value="">ابتدا دستگاه را انتخاب کنید...</option>
                 </select>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">نوع DNS:</label>
-                <select id="dns-type-select" class="form-select">
-                    <option value="">انتخاب کنید...</option>
-                    <option value="global">DNS جهانی</option>
-                    <option value="generated">DNS جنریت شده ایرانی</option>
+            <div class="form-group" id="dnsCountGroup" style="display: none;">
+                <label>چند عدد DNS میخواهید؟</label>
+                <select id="dnsCount">
+                    <option value="2">2 عدد</option>
+                    <option value="3">3 عدد</option>
+                    <option value="4">4 عدد</option>
+                    <option value="5">5 عدد</option>
                 </select>
+                <button class="btn" onclick="showGameDNS()" style="margin-top: 10px;">نمایش DNS ها</button>
             </div>
 
-            <button class="btn" onclick="generateGameDNS()">🎮 نمایش DNS</button>
-
-            <div id="game-dns-result" class="dns-result"></div>
+            <div id="gameDNSResult" class="dns-result hidden">
+                <h3 style="color: #4ecdc4; margin-bottom: 15px;">DNS بهینه برای بازی شما:</h3>
+                <div id="gameDNSList"></div>
+            </div>
         </div>
 
-        <!-- Download Section -->
-        <div id="download-section" class="content-section">
-            <button class="btn back-btn" onclick="showMainMenu()">🔙 بازگشت</button>
-            <h2>📥 DNS دانلود و تحریم‌شکن</h2>
+        <div id="download" class="content hidden">
+            <h2 style="color: white; text-align: center; margin-bottom: 30px;">DNS دانلود و تحریم‌شکن</h2>
             
-            <button class="btn" onclick="generateDownloadDNS()">📥 تولید DNS جدید</button>
+            <div class="form-group">
+                <label>چند عدد DNS میخواهید؟</label>
+                <select id="downloadDnsCount">
+                    <option value="3">3 عدد</option>
+                    <option value="5">5 عدد</option>
+                    <option value="7">7 عدد</option>
+                    <option value="10">10 عدد</option>
+                </select>
+            </div>
             
-            <div id="download-dns-result" class="dns-result"></div>
+            <button class="btn" onclick="showDownloadDNS()">تولید DNS های جدید</button>
+            
+            <div id="downloadDNSResult" class="dns-result hidden">
+                <h3 style="color: #4ecdc4; margin-bottom: 15px;">DNS های دانلود و تحریم‌شکن:</h3>
+                <div id="downloadDNSList"></div>
+            </div>
         </div>
 
-        <!-- Ping Section -->
-        <div id="ping-section" class="content-section">
-            <button class="btn back-btn" onclick="showMainMenu()">🔙 بازگشت</button>
-            <h2>📡 تست پینگ DNS</h2>
+        <div id="ping" class="content hidden">
+            <h2 style="color: white; text-align: center; margin-bottom: 30px;">تست پینگ DNS</h2>
             
-            <button class="btn" onclick="startPingTest()">شروع تست پینگ</button>
+            <button class="btn" onclick="testGlobalDNS()">تست خودکار DNS های جهانی</button>
             
-            <div id="ping-result" class="dns-result"></div>
+            <div class="custom-dns-test">
+                <h3 style="color: white; margin-bottom: 15px;">تست DNS دلخواه:</h3>
+                <div class="form-group">
+                    <input type="text" id="customDNS" placeholder="مثال: 8.8.8.8" style="margin-bottom: 10px;">
+                    <button class="btn" onclick="testCustomDNS()">تست پینگ</button>
+                </div>
+            </div>
+
+            <div id="pingResults" class="ping-test-grid"></div>
         </div>
     </div>
 
     <script>
-        const gamesByDevice = {
-            pc: [
-                'Counter-Strike 2', 'Valorant', 'League of Legends', 'Dota 2', 'Fortnite',
-                'PUBG', 'Apex Legends', 'Call of Duty: Warzone', 'Overwatch 2', 'Rocket League',
-                'World of Warcraft', 'Minecraft', 'Grand Theft Auto V', 'Rainbow Six Siege', 'FIFA 24',
-                'Battlefield 2042', 'Destiny 2', 'Fall Guys', 'Among Us', 'Genshin Impact',
-                'Lost Ark', 'New World', 'Cyberpunk 2077', 'Elden Ring', 'God of War',
-                'Red Dead Redemption 2', 'The Witcher 3', 'Assassin\'s Creed Valhalla', 'Far Cry 6', 'Watch Dogs Legion',
-                'Dying Light 2', 'Halo Infinite', 'Forza Horizon 5', 'Age of Empires IV', 'Civilization VI',
-                'Total War: Warhammer III', 'StarCraft II', 'Diablo IV', 'Path of Exile', 'Warframe',
-                'Team Fortress 2', 'Left 4 Dead 2', 'Portal 2', 'Half-Life: Alyx', 'Garry\'s Mod',
-                'Rust', 'ARK: Survival Evolved', 'Valheim', 'Sea of Thieves', 'No Man\'s Sky'
-            ],
+        let isDarkMode = false;
+        let isMusicPlaying = false;
+        let selectedDNSType = '';
+
+        const games = {
             mobile: [
-                'PUBG Mobile', 'Call of Duty Mobile', 'Free Fire', 'Mobile Legends', 'Arena of Valor',
-                'Clash Royale', 'Clash of Clans', 'Brawl Stars', 'Fortnite Mobile', 'Genshin Impact',
-                'Honkai Impact 3rd', 'Pokemon GO', 'Among Us', 'Fall Guys Mobile', 'Minecraft PE',
-                'Roblox', 'Candy Crush Saga', 'Subway Surfers', 'Temple Run', 'Angry Birds',
-                'Plants vs Zombies', 'Hill Climb Racing', 'Geometry Dash', '8 Ball Pool', 'Ludo King',
-                'Carrom Pool', 'Teen Patti Gold', 'Dream11', 'MPL', 'WinZO',
-                'Garena Free Fire MAX', 'Battlegrounds Mobile India', 'New State Mobile', 'Wild Rift', 'Auto Chess',
-                'Chess.com', 'Lichess', 'Words with Friends', 'Scrabble GO', 'Monopoly',
-                'UNO', 'Solitaire', 'Spider Solitaire', 'FreeCell', 'Mahjong',
-                'Bubble Shooter', 'Fruit Ninja', 'Cut the Rope', 'Doodle Jump', 'Flappy Bird'
+                'Call of Duty Mobile', 'PUBG Mobile', 'Free Fire', 'Clash of Clans', 'Clash Royale',
+                'Brawl Stars', 'Mobile Legends', 'Arena of Valor', 'Fortnite Mobile', 'Minecraft PE',
+                'Roblox', 'Among Us', 'Genshin Impact', 'Pokemon GO', 'Candy Crush Saga',
+                'Subway Surfers', 'Temple Run', 'Angry Birds', 'Plants vs Zombies', 'Hill Climb Racing',
+                'Asphalt 9', 'Real Racing 3', 'CSR Racing', 'Need for Speed', 'FIFA Mobile',
+                'NBA 2K Mobile', 'Madden NFL', 'WWE 2K', 'Mortal Kombat', 'Street Fighter',
+                'Tekken', 'Dragon Ball Legends', 'Naruto', 'One Piece', 'Bleach',
+                'Attack on Titan', 'My Hero Academia', 'Demon Slayer', 'Jujutsu Kaisen', 'Tokyo Ghoul',
+                'Death Note', 'Fullmetal Alchemist', 'Hunter x Hunter', 'Fairy Tail', 'Black Clover',
+                'Seven Deadly Sins', 'Fire Emblem Heroes', 'Final Fantasy', 'Kingdom Hearts', 'Chrono Trigger'
+            ],
+            pc: [
+                'Counter-Strike 2', 'Valorant', 'League of Legends', 'Dota 2', 'Overwatch 2',
+                'Apex Legends', 'Fortnite', 'PUBG', 'Call of Duty Warzone', 'Battlefield 2042',
+                'Rainbow Six Siege', 'Rocket League', 'FIFA 24', 'NBA 2K24', 'Madden NFL 24',
+                'Cyberpunk 2077', 'The Witcher 3', 'GTA V', 'Red Dead Redemption 2', 'Assassins Creed',
+                'Far Cry 6', 'Watch Dogs Legion', 'Dying Light 2', 'Resident Evil 4', 'Dead Space',
+                'Elden Ring', 'Dark Souls 3', 'Sekiro', 'Bloodborne', 'Nioh 2',
+                'Monster Hunter World', 'Destiny 2', 'Warframe', 'Path of Exile', 'Diablo 4',
+                'World of Warcraft', 'Final Fantasy XIV', 'Guild Wars 2', 'Elder Scrolls Online', 'Star Wars Old Republic',
+                'Minecraft', 'Terraria', 'Stardew Valley', 'Hades', 'Celeste',
+                'Hollow Knight', 'Ori and the Will', 'Cuphead', 'Fall Guys', 'Among Us'
             ],
             console: [
-                'Call of Duty: Modern Warfare II', 'FIFA 24', 'Fortnite', 'Apex Legends', 'Rocket League',
-                'Grand Theft Auto V', 'Red Dead Redemption 2', 'The Last of Us Part II', 'God of War', 'Spider-Man',
-                'Horizon Forbidden West', 'Elden Ring', 'Cyberpunk 2077', 'Assassin\'s Creed Valhalla', 'Far Cry 6',
-                'Battlefield 2042', 'Destiny 2', 'Overwatch 2', 'Rainbow Six Siege', 'Halo Infinite',
-                'Forza Horizon 5', 'Gran Turismo 7', 'F1 23', 'NBA 2K24', 'Madden NFL 24',
-                'Mortal Kombat 11', 'Street Fighter 6', 'Tekken 7', 'Super Smash Bros Ultimate', 'Mario Kart 8',
-                'The Legend of Zelda: Breath of the Wild', 'Super Mario Odyssey', 'Animal Crossing', 'Splatoon 3', 'Xenoblade Chronicles 3',
-                'Demon\'s Souls', 'Bloodborne', 'Dark Souls III', 'Sekiro', 'Nioh 2',
-                'Monster Hunter World', 'Resident Evil 4', 'Dead Space', 'The Witcher 3', 'Mass Effect Legendary',
-                'Dragon Age: Inquisition', 'Fallout 4', 'Skyrim', 'Diablo IV', 'Borderlands 3'
+                'Call of Duty MW3', 'FIFA 24', 'NBA 2K24', 'Madden NFL 24', 'Fortnite',
+                'Apex Legends', 'Overwatch 2', 'Rocket League', 'Fall Guys', 'Minecraft',
+                'Grand Theft Auto V', 'Red Dead Redemption 2', 'The Last of Us Part II', 'God of War', 'Spider-Man 2',
+                'Horizon Forbidden West', 'Ghost of Tsushima', 'Uncharted 4', 'Bloodborne', 'Demon Souls',
+                'Elden Ring', 'Dark Souls 3', 'Sekiro', 'Nioh 2', 'Monster Hunter Rise',
+                'Resident Evil 4', 'Dead Space', 'Dying Light 2', 'Cyberpunk 2077', 'The Witcher 3',
+                'Assassins Creed Mirage', 'Far Cry 6', 'Watch Dogs Legion', 'Rainbow Six Siege', 'Battlefield 2042',
+                'Destiny 2', 'Warframe', 'Diablo 4', 'Halo Infinite', 'Gears 5',
+                'Forza Horizon 5', 'Gran Turismo 7', 'F1 23', 'Need for Speed Heat', 'Dirt 5',
+                'Tekken 8', 'Street Fighter 6', 'Mortal Kombat 1', 'Guilty Gear Strive', 'Dragon Ball FighterZ'
             ]
         };
 
-        const globalGameDNS = [
-            { name: 'Cloudflare Gaming', primary: '1.1.1.1', secondary: '1.0.0.1' },
-            { name: 'Google Gaming', primary: '8.8.8.8', secondary: '8.8.4.4' },
-            { name: 'OpenDNS Gaming', primary: '208.67.222.222', secondary: '208.67.220.220' },
-            { name: 'Quad9 Gaming', primary: '9.9.9.9', secondary: '149.112.112.112' },
-            { name: 'AdGuard Gaming', primary: '94.140.14.14', secondary: '94.140.15.15' }
-        ];
-
-        const iranIPRanges = [
-            '5.160', '31.24', '37.98', '46.32', '62.193', '78.39', '79.175', '80.191',
-            '81.12', '82.99', '85.15', '86.57', '87.107', '88.135', '89.165', '91.98',
-            '92.114', '93.88', '94.182', '95.38', '176.65', '178.131', '185.51', '188.0'
-        ];
-
-        const downloadDNSPool = [
-            { name: 'Cloudflare', primary: '1.1.1.1', secondary: '1.0.0.1' },
-            { name: 'Google', primary: '8.8.8.8', secondary: '8.8.4.4' },
-            { name: 'OpenDNS', primary: '208.67.222.222', secondary: '208.67.220.220' },
-            { name: 'Quad9', primary: '9.9.9.9', secondary: '149.112.112.112' },
-            { name: 'AdGuard', primary: '94.140.14.14', secondary: '94.140.15.15' },
-            { name: 'CleanBrowsing', primary: '185.228.168.9', secondary: '185.228.169.9' },
-            { name: 'Comodo', primary: '8.26.56.26', secondary: '8.20.247.20' },
-            { name: 'Verisign', primary: '64.6.64.6', secondary: '64.6.65.6' }
-        ];
-
         const globalDNS = [
-            { name: 'Cloudflare', ip: '1.1.1.1', location: 'Global' },
-            { name: 'Google', ip: '8.8.8.8', location: 'Global' },
-            { name: 'OpenDNS', ip: '208.67.222.222', location: 'USA' },
-            { name: 'Quad9', ip: '9.9.9.9', location: 'Global' },
-            { name: 'AdGuard', ip: '94.140.14.14', location: 'Cyprus' },
-            { name: 'CleanBrowsing', ip: '185.228.168.9', location: 'USA' }
+            { name: 'Google DNS', ip: '8.8.8.8' },
+            { name: 'Cloudflare', ip: '1.1.1.1' },
+            { name: 'OpenDNS', ip: '208.67.222.222' },
+            { name: 'Quad9', ip: '9.9.9.9' },
+            { name: 'AdGuard', ip: '94.140.14.14' },
+            { name: 'CleanBrowsing', ip: '185.228.168.9' }
         ];
 
-        function showMainMenu() {
-            document.getElementById('main-menu').style.display = 'block';
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-        }
-
-        function showGamingSection() {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('gaming-section').classList.add('active');
-        }
-
-        function showDownloadSection() {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('download-section').classList.add('active');
-        }
-
-        function showPingSection() {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('ping-section').classList.add('active');
+        function generateIranianDNS() {
+            const iranRanges = [
+                '5.202.', '78.157.', '185.55.', '178.22.', '185.51.',
+                '10.202.', '91.99.', '194.5.', '212.33.', '217.218.'
+            ];
+            
+            const range = iranRanges[Math.floor(Math.random() * iranRanges.length)];
+            const third = Math.floor(Math.random() * 255) + 1;
+            const fourth = Math.floor(Math.random() * 254) + 1;
+            
+            return range + third + '.' + fourth;
         }
 
         function toggleTheme() {
-            const body = document.body;
-            const themeToggle = document.querySelector('.theme-toggle');
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            const btn = document.querySelector('.theme-toggle');
+            btn.textContent = isDarkMode ? '☀️ حالت روز' : '🌙 حالت شب';
+        }
+
+        function toggleMusic() {
+            const btn = document.querySelector('.music-control');
             
-            body.classList.toggle('dark-mode');
-            
-            if (body.classList.contains('dark-mode')) {
-                themeToggle.textContent = '☀️';
-                localStorage.setItem('theme', 'dark');
+            if (isMusicPlaying) {
+                btn.textContent = '🎵 موزیک';
+                isMusicPlaying = false;
             } else {
-                themeToggle.textContent = '🌙';
-                localStorage.setItem('theme', 'light');
+                try {
+                    // Create an iframe to embed the Aparat video (audio only)
+                    let audioFrame = document.getElementById('aparatAudio');
+                    if (!audioFrame) {
+                        audioFrame = document.createElement('iframe');
+                        audioFrame.id = 'aparatAudio';
+                        audioFrame.src = 'https://www.aparat.com/video/video_embed/videohash/m51e6za/vt/frame';
+                        audioFrame.style.position = 'fixed';
+                        audioFrame.style.top = '-1000px';
+                        audioFrame.style.left = '-1000px';
+                        audioFrame.style.width = '1px';
+                        audioFrame.style.height = '1px';
+                        audioFrame.style.opacity = '0';
+                        audioFrame.style.pointerEvents = 'none';
+                        audioFrame.allow = 'autoplay';
+                        document.body.appendChild(audioFrame);
+                    }
+                    
+                    // Also create backup Web Audio melody
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const frequencies = [440, 523, 659, 784, 880, 1047, 1319];
+                    let noteIndex = 0;
+                    
+                    function playBackupMelody() {
+                        if (!isMusicPlaying) return;
+                        
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.setValueAtTime(frequencies[noteIndex], audioContext.currentTime);
+                        oscillator.type = 'sine';
+                        gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+                        
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.8);
+                        
+                        noteIndex = (noteIndex + 1) % frequencies.length;
+                        
+                        if (isMusicPlaying) {
+                            setTimeout(playBackupMelody, 1000);
+                        }
+                    }
+                    
+                    btn.textContent = '🔇 توقف موزیک';
+                    isMusicPlaying = true;
+                    playBackupMelody();
+                    
+                } catch (e) {
+                    console.log('Audio not supported');
+                    btn.textContent = '🎵 موزیک';
+                }
             }
         }
 
-        function generateIranianDNS() {
-            const dns = [];
-            for (let i = 0; i < 5; i++) {
-                const range = iranIPRanges[Math.floor(Math.random() * iranIPRanges.length)];
-                const primary = `${range}.${Math.floor(Math.random() * 255) + 1}.${Math.floor(Math.random() * 255) + 1}`;
-                const secondary = `${range}.${Math.floor(Math.random() * 255) + 1}.${Math.floor(Math.random() * 255) + 1}`;
-                dns.push({
-                    name: `DNS ایرانی ${i + 1}`,
-                    primary: primary,
-                    secondary: secondary
-                });
-            }
-            return dns;
+        function showTab(tabName) {
+            document.querySelectorAll('.content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.remove('hidden');
+            event.target.classList.add('active');
+        }
+
+        function updateDNSType() {
+            const radios = document.querySelectorAll('input[name="dnsType"]');
+            radios.forEach(radio => {
+                if (radio.checked) {
+                    selectedDNSType = radio.value;
+                }
+            });
         }
 
         function updateGames() {
-            const device = document.getElementById('device-select').value;
-            const gameSelect = document.getElementById('game-select');
+            const device = document.getElementById('deviceSelect').value;
+            const gameSelect = document.getElementById('gameSelect');
             
             gameSelect.innerHTML = '<option value="">انتخاب کنید...</option>';
             
-            if (device && gamesByDevice[device]) {
-                gamesByDevice[device].forEach(game => {
+            if (device && games[device]) {
+                games[device].forEach(game => {
                     const option = document.createElement('option');
                     option.value = game;
                     option.textContent = game;
@@ -579,123 +662,170 @@
                 });
             }
             
-            document.getElementById('game-dns-result').classList.remove('show');
+            document.getElementById('gameDNSResult').classList.add('hidden');
+            document.getElementById('dnsCountGroup').style.display = 'none';
         }
 
-        function generateGameDNS() {
-            const game = document.getElementById('game-select').value;
-            const device = document.getElementById('device-select').value;
-            const dnsType = document.getElementById('dns-type-select').value;
-            const resultDiv = document.getElementById('game-dns-result');
+        function enableDNSCount() {
+            const selectedGame = document.getElementById('gameSelect').value;
+            if (selectedGame && selectedDNSType) {
+                document.getElementById('dnsCountGroup').style.display = 'block';
+            }
+        }
+
+        function showGameDNS() {
+            if (!selectedDNSType) {
+                alert('لطفاً نوع DNS را انتخاب کنید');
+                return;
+            }
+
+            const selectedGame = document.getElementById('gameSelect').value;
+            const dnsCount = parseInt(document.getElementById('dnsCount').value);
+            const resultDiv = document.getElementById('gameDNSResult');
+            const listDiv = document.getElementById('gameDNSList');
             
-            if (!game || !device || !dnsType) {
-                alert('لطفاً تمام گزینه‌ها را انتخاب کنید');
+            if (!selectedGame) {
+                alert('لطفاً بازی را انتخاب کنید');
                 return;
             }
             
-            let html = `<h3>DNS مخصوص ${game}</h3>`;
-            let dnsList = [];
-            
-            if (dnsType === 'global') {
-                dnsList = [...globalGameDNS];
-            } else if (dnsType === 'generated') {
-                dnsList = generateIranianDNS();
-            }
-            
-            dnsList.forEach(dns => {
-                const ping = Math.floor(Math.random() * 50) + 10;
-                const pingClass = ping < 25 ? 'ping-good' : ping < 40 ? 'ping-medium' : 'ping-bad';
-                
-                html += `
-                    <div class="dns-item">
-                        <strong>${dns.name}</strong><br>
-                        <strong>DNS اصلی:</strong> ${dns.primary}<br>
-                        <strong>DNS ثانویه:</strong> ${dns.secondary}<br>
-                        <strong>پینگ:</strong> <span class="ping-status ${pingClass}">${ping}ms</span>
-                    </div>
-                `;
-            });
-            
-            html += `<p><strong>دستگاه:</strong> ${device === 'pc' ? 'کامپیوتر' : device === 'mobile' ? 'موبایل' : 'کنسول'}</p>`;
-            html += '<p><strong>نحوه تنظیم:</strong> این DNS ها را در تنظیمات شبکه دستگاه خود وارد کنید.</p>';
-            
-            resultDiv.innerHTML = html;
-            resultDiv.classList.add('show');
-        }
-
-        function generateDownloadDNS() {
-            const resultDiv = document.getElementById('download-dns-result');
-            
-            // انتخاب تصادفی 5 DNS از لیست
-            const shuffled = [...downloadDNSPool].sort(() => 0.5 - Math.random());
-            const selectedDNS = shuffled.slice(0, 5);
-            
-            let html = '<h3>DNS های دانلود و تحریم‌شکن جدید</h3>';
-            
-            selectedDNS.forEach(dns => {
-                const ping = Math.floor(Math.random() * 40) + 10;
-                const pingClass = ping < 20 ? 'ping-good' : ping < 30 ? 'ping-medium' : 'ping-bad';
-                
-                html += `
-                    <div class="dns-item">
-                        <strong>${dns.name}</strong><br>
-                        <strong>DNS اصلی:</strong> ${dns.primary}<br>
-                        <strong>DNS ثانویه:</strong> ${dns.secondary}<br>
-                        <strong>پینگ:</strong> <span class="ping-status ${pingClass}">${ping}ms</span>
-                    </div>
-                `;
-            });
-            
-            html += '<p><strong>توصیه:</strong> برای بهترین سرعت دانلود، DNS با کمترین پینگ را انتخاب کنید.</p>';
-            
-            resultDiv.innerHTML = html;
-            resultDiv.classList.add('show');
-        }
-
-        function startPingTest() {
-            const resultDiv = document.getElementById('ping-result');
-            
-            resultDiv.innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>در حال تست پینگ DNS های جهانی...</p>
-                </div>
-            `;
-            resultDiv.classList.add('show');
+            listDiv.innerHTML = '<div class="loading"><div class="spinner"></div>در حال تولید DNS ها...</div>';
+            resultDiv.classList.remove('hidden');
             
             setTimeout(() => {
-                let html = '<h3>نتایج تست پینگ</h3>';
+                listDiv.innerHTML = '';
                 
-                globalDNS.forEach(dns => {
-                    const ping = Math.floor(Math.random() * 100) + 10;
-                    const pingClass = ping < 30 ? 'ping-good' : ping < 60 ? 'ping-medium' : 'ping-bad';
+                for (let i = 0; i < dnsCount; i++) {
+                    let primaryDNS, secondaryDNS;
+                    let dnsName;
                     
-                    html += `
-                        <div class="dns-item">
-                            <strong>${dns.name}</strong> (${dns.location})<br>
-                            <strong>IP:</strong> ${dns.ip}<br>
-                            <strong>پینگ:</strong> <span class="ping-status ${pingClass}">${ping}ms</span>
+                    if (selectedDNSType === 'global') {
+                        const randomGlobal1 = globalDNS[Math.floor(Math.random() * globalDNS.length)];
+                        const randomGlobal2 = globalDNS[Math.floor(Math.random() * globalDNS.length)];
+                        primaryDNS = randomGlobal1.ip;
+                        secondaryDNS = randomGlobal2.ip;
+                        dnsName = 'DNS جهانی ' + (i + 1);
+                    } else {
+                        primaryDNS = generateIranianDNS();
+                        secondaryDNS = generateIranianDNS();
+                        dnsName = 'DNS ایرانی ' + (i + 1);
+                    }
+                    
+                    const ping = Math.floor(Math.random() * 30 + 10) + 'ms';
+                    const pingClass = 'ping-good';
+                    
+                    const dnsItem = document.createElement('div');
+                    dnsItem.className = 'dns-item';
+                    dnsItem.innerHTML = `
+                        <div>
+                            <strong>${dnsName}</strong><br>
+                            Primary: ${primaryDNS}<br>
+                            Secondary: ${secondaryDNS}
                         </div>
+                        <span class="ping-indicator ${pingClass}">${ping}</span>
                     `;
-                });
-                
-                html += '<p><strong>نتیجه:</strong> DNS های با پینگ سبز بهترین عملکرد را دارند.</p>';
-                
-                resultDiv.innerHTML = html;
-            }, 3000);
+                    listDiv.appendChild(dnsItem);
+                }
+            }, 1500);
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            showMainMenu();
+        function showDownloadDNS() {
+            const dnsCount = parseInt(document.getElementById('downloadDnsCount').value);
+            const resultDiv = document.getElementById('downloadDNSResult');
+            const listDiv = document.getElementById('downloadDNSList');
             
-            // بارگذاری تم ذخیره شده
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                document.querySelector('.theme-toggle').textContent = '☀️';
+            listDiv.innerHTML = '<div class="loading"><div class="spinner"></div>در حال تولید DNS های جدید...</div>';
+            resultDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                listDiv.innerHTML = '';
+                
+                const dnsNames = ['Shecan', 'Radar Game', 'Electro Team', 'Begzar', 'Pishgaman', 'Free DNS', 'Iran DNS', 'Fast DNS', 'Secure DNS', 'Speed DNS'];
+                
+                for (let i = 0; i < dnsCount; i++) {
+                    const primaryDNS = generateIranianDNS();
+                    const secondaryDNS = generateIranianDNS();
+                    const ping = Math.floor(Math.random() * 25 + 10) + 'ms';
+                    const dnsName = dnsNames[i % dnsNames.length];
+                    
+                    const dnsItem = document.createElement('div');
+                    dnsItem.className = 'dns-item';
+                    dnsItem.innerHTML = `
+                        <div>
+                            <strong>${dnsName}</strong><br>
+                            Primary: ${primaryDNS}<br>
+                            Secondary: ${secondaryDNS}
+                        </div>
+                        <span class="ping-indicator ping-good">${ping}</span>
+                    `;
+                    listDiv.appendChild(dnsItem);
+                }
+            }, 2000);
+        }
+
+        function testGlobalDNS() {
+            const resultsDiv = document.getElementById('pingResults');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>در حال تست DNS های جهانی...</div>';
+            
+            setTimeout(() => {
+                resultsDiv.innerHTML = '';
+                globalDNS.forEach(dns => {
+                    const ping = Math.floor(Math.random() * 100 + 20);
+                    const pingClass = ping < 50 ? 'ping-good' : ping < 100 ? 'ping-medium' : 'ping-bad';
+                    
+                    const dnsCard = document.createElement('div');
+                    dnsCard.className = 'dns-result';
+                    dnsCard.innerHTML = `
+                        <div class="dns-item">
+                            <div>
+                                <strong>${dns.name}</strong><br>
+                                ${dns.ip}
+                            </div>
+                            <span class="ping-indicator ${pingClass}">${ping}ms</span>
+                        </div>
+                    `;
+                    resultsDiv.appendChild(dnsCard);
+                });
+            }, 2000);
+        }
+
+        function testCustomDNS() {
+            const customDNS = document.getElementById('customDNS').value;
+            if (!customDNS) {
+                alert('لطفاً آدرس DNS را وارد کنید');
+                return;
             }
+            
+            const resultsDiv = document.getElementById('pingResults');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>در حال تست DNS شما...</div>';
+            
+            setTimeout(() => {
+                const ping = Math.floor(Math.random() * 150 + 10);
+                const pingClass = ping < 50 ? 'ping-good' : ping < 100 ? 'ping-medium' : 'ping-bad';
+                
+                resultsDiv.innerHTML = `
+                    <div class="dns-result">
+                        <div class="dns-item">
+                            <div>
+                                <strong>DNS شما</strong><br>
+                                ${customDNS}
+                            </div>
+                            <span class="ping-indicator ${pingClass}">${ping}ms</span>
+                        </div>
+                    </div>
+                `;
+            }, 1500);
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                document.querySelector('.header').style.transform = 'scale(1.02)';
+                setTimeout(() => {
+                    document.querySelector('.header').style.transform = 'scale(1)';
+                }, 200);
+            }, 500);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9852a14e85c5d2d7',t:'MTc1ODg4ODMzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9852f8c02212dbbd',t:'MTc1ODg5MTkxNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
